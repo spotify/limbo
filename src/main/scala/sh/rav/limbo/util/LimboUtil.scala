@@ -17,8 +17,36 @@
 
 package sh.rav.limbo.util
 
+import com.google.cloud.dataflow.sdk.options.PipelineOptions
+import com.google.cloud.dataflow.sdk.runners.DirectPipelineRunner
+import com.google.cloud.dataflow.sdk.runners.inprocess.InProcessPipelineRunner
+import com.google.cloud.hadoop.fs.gcs.GoogleHadoopFileSystem
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.FileSystem
+
 import scala.reflect.ClassTag
 
 private[limbo] object LimboUtil {
   def classOf[T: ClassTag]: Class[T] = implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
+
+  def isLocalDFRunner(options: PipelineOptions): Boolean = {
+    val runner = options.getRunner
+
+    require(runner != null, "Pipeline runner not set!")
+
+    runner.isAssignableFrom(classOf[DirectPipelineRunner]) ||
+      runner.isAssignableFrom(classOf[InProcessPipelineRunner])
+  }
+
+  def configureLocalGCSAccess(conf: Configuration): Configuration = {
+    require(conf != null, "Configuration should not be null")
+
+    conf.setClass("fs.gs.impl", classOf[GoogleHadoopFileSystem], classOf[FileSystem])
+    conf.setBoolean("fs.gs.auth.service.account.enable", false)
+    conf.set("fs.gs.auth.client.id", "32555940559.apps.googleusercontent.com")
+    conf.set("fs.gs.auth.client.secret", "ZmssLNjJy2998hD4CTg2ejr2")
+    conf.set("fs.gs.project.id", "_THIS_VALUE_DOES_NOT_MATTER_")
+
+    conf
+  }
 }

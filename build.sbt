@@ -17,6 +17,8 @@
 
 val scioVersion = "0.2.6"
 val sparkVersion = "2.0.1"
+val gcsConnectorVersion = "1.5.4-hadoop2"
+val dataprocApiVersion = "v1-rev9-1.22.0"
 
 organization  := "sh.rav"
 name          := "limbo"
@@ -30,8 +32,10 @@ libraryDependencies ++= Seq(
   "com.spotify" %% "scio-core" % scioVersion,
   "com.spotify" %% "scio-hdfs" % scioVersion,
   "org.apache.spark" %% "spark-core" % sparkVersion,
-  "org.apache.spark" %% "spark-sql" % sparkVersion
-  )
+  "org.apache.spark" %% "spark-sql" % sparkVersion,
+  "com.google.cloud.bigdataoss" % "gcs-connector" % gcsConnectorVersion,
+  "com.google.apis" % "google-api-services-dataproc" % dataprocApiVersion
+)
 
 // otherwise has issues with Hadoop FS service discovery
 fork := true

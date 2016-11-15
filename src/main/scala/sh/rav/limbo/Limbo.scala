@@ -29,14 +29,13 @@ import org.slf4j.LoggerFactory
 import sh.rav.limbo.util.LimboUtil
 
 import scala.reflect.ClassTag
-import scala.reflect.io.Path
 import scala.util.{Failure, Success}
 
 object Limbo {
 
   private[limbo] def getNewMaterializePath(sc: ScioContext): String = {
     val filename = "limbo-materialize-" + UUID.randomUUID().toString
-    val tmpDir = if (sc.options.getTempLocation == null) {
+    val tmpDir = if (sc.pipeline.getOptions.getTempLocation == null) {
       sys.props("java.io.tmpdir")
     } else {
       sc.options.getTempLocation
@@ -52,7 +51,7 @@ object Limbo {
 
       val path = getNewMaterializePath(self.context)
 
-      logger.info(s"Will materialize snapshot of ${self.name} to $path")
+      logger.info(s"Will materialize SCollection snapshot of ${self.name} to $path")
 
       val coder = self.internal
         .getPipeline.getCoderRegistry.getCoder(TypeDescriptor.of(LimboUtil.classOf[T]))
@@ -95,7 +94,7 @@ object Limbo {
 
       val coder = sc.pipeline.getCoderRegistry.getCoder(TypeDescriptor.of(LimboUtil.classOf[T]))
 
-      logger.info(s"Will materialize snapshot of RDD ${self.name} to $path")
+      logger.info(s"Will materialize RDD snapshot of ${self.name} to $path")
 
       //TODO: should this be some kind of future?
       self.map(t => CoderUtils.encodeToBase64(coder, t)).saveAsTextFile(path)
@@ -103,28 +102,26 @@ object Limbo {
       // Spark is using Hadoop output format to save as text file, thus we need to use HDFS
       // input method here.
       import com.spotify.scio.hdfs._
-      sc.hdfsTextFile(path + (if (path.endsWith("/")) "" else "/") + "*")
-        .map(s => CoderUtils.decodeFromBase64(coder, s))
+      sc.hdfsTextFile(path).map(s => CoderUtils.decodeFromBase64(coder, s))
     }
   }
 
-  def main(args: Array[String]): Unit = {
+  def main(argv: Array[String]): Unit = {
     // Init - this will be automated:
-    val (sc, _) = ContextAndArgs(args)
+    val (sc, args) = ContextAndArgs(argv)
+    val (sc1, _) = ContextAndArgs(argv)
     val spark = SparkSession.builder().master("local").getOrCreate()
 
-    // For tests:
-    Path("/tmp/roundtrip").deleteRecursively()
+    LimboUtil.configureLocalGCSAccess(spark.sparkContext.hadoopConfiguration)
 
     try {
       val scol = sc.parallelize(1 to 2)
       val rdd = scol.toRDD(spark).get
-      val (sc1, _) = ContextAndArgs(args)
       rdd
         .map(_ * 2)
         .toSCollection(sc1)
         .map(_ / 2)
-        .saveAsTextFile("/tmp/roundtrip")
+        .saveAsTextFile(args("output"))
       sc1.close()
     } finally {
       // Cleanup
