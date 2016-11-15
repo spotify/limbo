@@ -17,52 +17,117 @@
 
 package sh.rav.limbo
 
-import com.spotify.scio.ContextAndArgs
-import com.spotify.scio.values.SCollection
-import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.SparkSession
+import java.util.UUID
+
 import com.google.cloud.dataflow.sdk.util.CoderUtils
 import com.google.cloud.dataflow.sdk.values.TypeDescriptor
+import com.spotify.scio.values.SCollection
+import com.spotify.scio.{ContextAndArgs, ScioContext}
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.SparkSession
+import org.slf4j.LoggerFactory
 import sh.rav.limbo.util.LimboUtil
 
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
 import scala.reflect.ClassTag
-import scala.util.Random
+import scala.reflect.io.Path
+import scala.util.{Failure, Success}
 
 object Limbo {
 
-  implicit class SCollectionToRDD[T: ClassTag](val self: SCollection[T]) {
-    def toRDD(spark: SparkSession)
-             (minPartitions: Int = spark.sparkContext.defaultParallelism,
-              loc: String = null): Future[RDD[T]] = {
+  private[limbo] def getNewMaterializePath(sc: ScioContext): String = {
+    val filename = "limbo-materialize-" + UUID.randomUUID().toString
+    val tmpDir = if (sc.options.getTempLocation == null) {
+      sys.props("java.io.tmpdir")
+    } else {
+      sc.options.getTempLocation
+    }
+    tmpDir + (if (tmpDir.endsWith("/")) "" else "/") + filename
+  }
 
-      import scala.concurrent.ExecutionContext.Implicits.global
+  implicit class SCollectionToRDD[T: ClassTag](val self: SCollection[T]) {
+
+    private val logger = LoggerFactory.getLogger(self.getClass)
+
+    def toRDD(spark: SparkSession, minPartitions: Int = 0): Option[RDD[T]] = {
+
+      val path = getNewMaterializePath(self.context)
+
+      logger.info(s"Will materialize snapshot of ${self.name} to $path")
 
       val coder = self.internal
         .getPipeline.getCoderRegistry.getCoder(TypeDescriptor.of(LimboUtil.classOf[T]))
 
-      self.map(t => CoderUtils.encodeToBase64(coder, t)).saveAsTextFile(loc)
-        .map(_ =>
-          spark.sparkContext
-            .textFile(loc, minPartitions).map(s => CoderUtils.decodeFromBase64(coder, s))
-        )
+      val hintPartitions = if (minPartitions == 0) {
+        spark.sparkContext.defaultMinPartitions
+      } else {
+        minPartitions
+      }
+
+      //TODO: Should we use num of shards to improve min partitions in RDD?
+      val snapshot = self
+        .map(t => CoderUtils.encodeToBase64(coder, t))
+        .saveAsTextFile(path)
+
+      self.context.close()
+
+      snapshot.value match {
+        case Some(Success(_)) =>
+          val rdd = spark.sparkContext
+            .textFile(path, hintPartitions).map(s => CoderUtils.decodeFromBase64(coder, s))
+          Some(rdd)
+        case Some(Failure(e)) =>
+          logger.error(s"Failed to snapshot of SCollection ${self.name} to $path due to $e")
+          None
+        case _ => {
+          logger.error(s"Failed to snapshot ${self.name} to $path")
+          None
+        }
+      }
+    }
+  }
+
+  implicit class RDDToSCollection[T: ClassTag](val self: RDD[T]) {
+
+    private val logger = LoggerFactory.getLogger(self.getClass)
+
+    def toSCollection(sc: ScioContext): SCollection[T] = {
+      val path = getNewMaterializePath(sc)
+
+      val coder = sc.pipeline.getCoderRegistry.getCoder(TypeDescriptor.of(LimboUtil.classOf[T]))
+
+      logger.info(s"Will materialize snapshot of RDD ${self.name} to $path")
+
+      //TODO: should this be some kind of future?
+      self.map(t => CoderUtils.encodeToBase64(coder, t)).saveAsTextFile(path)
+
+      // Spark is using Hadoop output format to save as text file, thus we need to use HDFS
+      // input method here.
+      import com.spotify.scio.hdfs._
+      sc.hdfsTextFile(path + (if (path.endsWith("/")) "" else "/") + "*")
+        .map(s => CoderUtils.decodeFromBase64(coder, s))
     }
   }
 
   def main(args: Array[String]): Unit = {
-    import scala.concurrent.ExecutionContext.Implicits.global
-
-    val (sc, arg) = ContextAndArgs(args)
+    // Init - this will be automated:
+    val (sc, _) = ContextAndArgs(args)
     val spark = SparkSession.builder().master("local").getOrCreate()
 
+    // For tests:
+    Path("/tmp/roundtrip").deleteRecursively()
+
     try {
-      val scol = sc.parallelize(1 to 10)
-      val fRDD = scol.toRDD(spark)(loc = "/tmp/tmp_loc" + Random.nextInt())
-      sc.close()
-      val r = fRDD.collect{ case rdd => rdd.map(_ * 2).saveAsTextFile("/tmp/doubles") }
-      Await.result(r, Duration.Inf)
+      val scol = sc.parallelize(1 to 2)
+      val rdd = scol.toRDD(spark).get
+      val (sc1, _) = ContextAndArgs(args)
+      rdd
+        .map(_ * 2)
+        .toSCollection(sc1)
+        .map(_ / 2)
+        .saveAsTextFile("/tmp/roundtrip")
+      sc1.close()
     } finally {
+      // Cleanup
       spark.stop()
     }
   }
