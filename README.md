@@ -5,8 +5,7 @@ Limbo
 
 ## Raison d'être:
 
-TODO
+Note: this is WIP.
 
-## Usage:
-
-TODO
+Limbo is a Scala API which allows to leverage best of different data processing frameworks by
+allowing seamless transition between framework specific data structures.
