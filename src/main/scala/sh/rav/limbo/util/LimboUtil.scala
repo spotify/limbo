@@ -17,9 +17,11 @@
 
 package sh.rav.limbo.util
 
+import com.google.api.client.googleapis.services.AbstractGoogleClientRequest
 import com.google.cloud.dataflow.sdk.options.PipelineOptions
 import com.google.cloud.dataflow.sdk.runners.DirectPipelineRunner
 import com.google.cloud.dataflow.sdk.runners.inprocess.InProcessPipelineRunner
+import com.google.cloud.dataflow.sdk.util.BigQueryTableRowIterator
 import com.google.cloud.hadoop.fs.gcs.GoogleHadoopFileSystem
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
@@ -48,5 +50,10 @@ private[limbo] object LimboUtil {
     conf.set("fs.gs.project.id", "_THIS_VALUE_DOES_NOT_MATTER_")
 
     conf
+  }
+
+  def executeWithBackOff[T](request: AbstractGoogleClientRequest[T], errorMsg: String): T = {
+    // Reuse util method from BigQuery
+    BigQueryTableRowIterator.executeWithBackOff(request, errorMsg)
   }
 }
