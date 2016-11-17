@@ -1,0 +1,11 @@
+language: scala
+scala:
+  - 2.11.8
+jdk: oraclejdk7
+
+script:
+  - sbt test
+
+notifications:
+  email:
+    - rav@spotify.com
