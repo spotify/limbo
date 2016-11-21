@@ -21,6 +21,7 @@ import java.io.File
 import java.nio.charset.StandardCharsets
 import java.util.Locale
 
+import com.google.cloud.compute.{ComputeOptions, Instance, InstanceId}
 import com.google.cloud.dataflow.sdk.util.FluentBackoff
 import com.google.common.io.Files
 import org.joda.time.Duration
@@ -75,6 +76,32 @@ object GcpHelpers {
         throw e
       }
     }
+  }
+
+  private[limbo] def getGcpInstance(instanceName: String, projectId: String, zone: String)
+  : Instance = {
+    val instance = InstanceId.of(projectId, zone, instanceName)
+
+    val optionsBuilder = ComputeOptions.newBuilder
+    val compute = optionsBuilder.build().getService
+
+    compute.getInstance(instance)
+  }
+
+  private[limbo] def getNatIPofInstance(instanceName: String, projectId: String, zone: String)
+  : String = {
+    import scala.collection.JavaConverters._
+    GcpHelpers.getGcpInstance(instanceName, projectId, zone).getNetworkInterfaces.asScala
+      .flatMap(_.getAccessConfigurations.asScala.map(_.getNatIp))
+      .head
+  }
+
+  private[limbo] def getIPofInstance(instanceName: String, projectId: String, zone: String)
+  : String = {
+    import scala.collection.JavaConverters._
+    GcpHelpers.getGcpInstance(instanceName, projectId, zone).getNetworkInterfaces.asScala
+      .map(_.getNetworkIp)
+      .head
   }
 
   private[limbo] val messageBackoffFactory: FluentBackoff =

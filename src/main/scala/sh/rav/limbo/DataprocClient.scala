@@ -34,35 +34,14 @@ object DataprocClient {
   }
 
   /**
-   *  Create Dataproc cluster
+   *  Create Dataproc cluster given the cluster template
    */
-  def create(clusterName: String,
-             projectId: String = null,
-             zone: String = null,
-             region: String = "global"): DataprocOperationResult = {
-    val projId = Option(projectId).getOrElse {
-      // gcp java does not expose default project yet
-      // https://github.com/GoogleCloudPlatform/google-cloud-java/pull/1380
-      new DefaultProjectFactory().create(null)
-    }
+  def create(cluster: Cluster, region: String = "global"): DataprocOperationResult = {
+    require(cluster.getProjectId != null)
+    //TODO: add required fields check?
 
-    val gcpZone = Option(zone).getOrElse {
-      val infZone = GcpHelpers.getDefaultZone
-      logger.info(s"Inferred default GCP zone $infZone from gcloud. If this is the incorrect "
-        + "zone, please specify zone explicitly.")
-      infZone
-    }
-
-    val gceClusterConfig = new GceClusterConfig()
-      .setZoneUri(s"$computeApiRoot/projects/$projId/zones/$gcpZone")
-
-    val config = new ClusterConfig()
-      .setGceClusterConfig(gceClusterConfig)
-
-    val cluster = new Cluster()
-      .setClusterName(clusterName)
-      .setProjectId(projId)
-      .setConfig(config)
+    val projId = cluster.getProjectId
+    val gcpZone = cluster.getConfig.getGceClusterConfig.getZoneUri
 
     val req = defaultDataprocClient
       .projects()
@@ -72,8 +51,47 @@ object DataprocClient {
 
     DataprocOperationResult(
       LimboUtil.executeWithBackOff(req,
-        s"Creation of cluster $clusterName in project $projId (zone $gcpZone)"),
+        s"Creation of cluster ${cluster.getClusterName} in project $projId (zone $gcpZone)"),
       defaultDataprocClient)
+
+  }
+
+  /**
+   *  Create default Dataproc cluster by infering information by the environment
+   */
+  def create(clusterName: String,
+             projectId: String,
+             zone: String): DataprocOperationResult = {
+    val projId = Option(projectId).getOrElse {
+      // gcp java does not expose default project yet
+      // https://github.com/GoogleCloudPlatform/google-cloud-java/pull/1380
+      new DefaultProjectFactory().create(null)
+    }
+
+    val gcpZone = Option(zone).getOrElse{
+      val infZone = GcpHelpers.getDefaultZone
+      logger.info(s"Inferred default GCP zone $infZone from gcloud. If this is the incorrect "
+        + "zone, please specify zone explicitly.")
+      infZone
+    }
+
+    val region = gcpZone.split("-").take(2).mkString("-")
+    val xpnSubNet = "xpn-" + region.split("-").head + region.split("-")(1)(0) + region.last
+
+    val gceClusterConfig = new GceClusterConfig()
+      .setZoneUri(s"$computeApiRoot/projects/$projId/zones/$gcpZone")
+      .setSubnetworkUri(
+        s"$computeApiRoot/projects/xpn-master/regions/$region/subnetworks/$xpnSubNet")
+
+    val config = new ClusterConfig()
+      .setGceClusterConfig(gceClusterConfig)
+
+    val cluster = new Cluster()
+      .setClusterName(clusterName)
+      .setProjectId(projId)
+      .setConfig(config)
+
+    create(cluster)
   }
 
   /**
@@ -94,5 +112,33 @@ object DataprocClient {
       LimboUtil.executeWithBackOff(req,
         s"Deletion of cluster $clusterName in project $projId"), defaultDataprocClient)
 
+  }
+
+  def describe(clusterName: String, projectId: String = null, region: String = "global")
+  : Cluster = {
+    val projId = Option(projectId).getOrElse {
+      // gcp java does not expose default project yet
+      // https://github.com/GoogleCloudPlatform/google-cloud-java/pull/1380
+      new DefaultProjectFactory().create(null)
+    }
+
+    val req =
+      defaultDataprocClient.projects().regions().clusters().get(projId, region, clusterName)
+
+    LimboUtil.executeWithBackOff(req, s"Get cluster $clusterName in project $projId")
+  }
+
+  def list(projectId: String = null, region: String = "global"): Iterable[Cluster] = {
+    val projId = Option(projectId).getOrElse {
+      // gcp java does not expose default project yet
+      // https://github.com/GoogleCloudPlatform/google-cloud-java/pull/1380
+      new DefaultProjectFactory().create(null)
+    }
+
+    val req = defaultDataprocClient.projects().regions().clusters().list(projId, region)
+
+    val list = LimboUtil.executeWithBackOff(req, s"List clusters in project $projId")
+    import scala.collection.JavaConverters._
+    Option(list.getClusters).getOrElse(List.empty.asJava).asScala
   }
 }

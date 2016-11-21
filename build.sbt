@@ -16,10 +16,11 @@
  */
 
 val dataprocApiVersion = "v1-rev9-1.22.0"
+val dnsCacheManipulatorVersion = "1.5.1"
 val gcsConnectorVersion = "1.5.4-hadoop2"
 val googleCloudVersion = "0.6.0"
 val scioVersion = "0.2.6"
-val sparkVersion = "2.0.1"
+val sparkVersion = "2.0.2"
 
 organization  := "sh.rav"
 name          := "limbo"
@@ -34,9 +35,11 @@ libraryDependencies ++= Seq(
   "com.spotify" %% "scio-hdfs" % scioVersion,
   "org.apache.spark" %% "spark-core" % sparkVersion,
   "org.apache.spark" %% "spark-sql" % sparkVersion,
+  "org.apache.spark" %% "spark-yarn" % sparkVersion,
   "com.google.cloud.bigdataoss" % "gcs-connector" % gcsConnectorVersion,
   "com.google.apis" % "google-api-services-dataproc" % dataprocApiVersion,
-  "com.google.cloud" % "google-cloud" % googleCloudVersion
+  "com.google.cloud" % "google-cloud" % googleCloudVersion,
+  "com.alibaba" % "dns-cache-manipulator" % dnsCacheManipulatorVersion
 )
 
 // otherwise has issues with Hadoop FS service discovery
