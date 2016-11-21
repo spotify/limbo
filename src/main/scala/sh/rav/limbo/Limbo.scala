@@ -79,7 +79,7 @@ object Limbo {
     }               */
 
     val instance = "rav-test-us-1-m"
-    val limboStagingLocation =  s"hdfs://$instance/stagingLocation"
+    val limboStagingLocation =  s"hdfs://$instance/limbo-stagingLocation"
 
     val natIp = GcpHelpers.getNatIPofInstance(instance, "scio-metrics", "us-central1-a")
     val internalIp = GcpHelpers.getIPofInstance(instance, "scio-metrics", "us-central1-a")
@@ -95,6 +95,22 @@ object Limbo {
     }/* else {
       throw new Exception(s"Can't reach the master at $instance")
     }  */
+
+    val workers = DataprocClient.describe("rav-test-us-1", "scio-metrics")
+      .getConfig.getWorkerConfig.getInstanceNames
+    import scala.collection.JavaConverters._
+    workers.asScala
+      .map(w => w -> (GcpHelpers.getNatIPofInstance(w, "scio-metrics", "us-central1-a"),
+                 GcpHelpers.getIPofInstance(w, "scio-metrics", "us-central1-a")))
+      .foreach { case (i, ips) =>
+        if (InetAddress.getByName(ips._1).isReachable(1000)) {
+          logger.info(s"Adding ${ips._1} for $i")
+          DnsCacheManipulator.setDnsCache(i, ips._1)
+        } else {
+          logger.info(s"Adding ${ips._2} for $i")
+          DnsCacheManipulator.setDnsCache(i, ips._2)
+        }
+      }
 
     val sparkConf = new SparkConf()
     sparkConf.setMaster("yarn")
