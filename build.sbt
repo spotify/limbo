@@ -24,6 +24,7 @@ val sparkVersion = "2.0.2"
 
 organization  := "sh.rav"
 name          := "limbo"
+version       := "0.1.0-SNAPSHOT"
 
 scalaVersion  := "2.11.8"
 
@@ -44,6 +45,8 @@ libraryDependencies ++= Seq(
 
 // otherwise has issues with Hadoop FS service discovery
 fork := true
+
+packAutoSettings
 
 test in assembly := {}
 assemblyMergeStrategy in assembly ~= { old => {

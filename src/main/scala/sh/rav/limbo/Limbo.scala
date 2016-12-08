@@ -21,6 +21,7 @@ import java.net.{InetAddress, URI}
 
 import com.alibaba.dcm.DnsCacheManipulator
 import com.google.cloud.dataflow.sdk.util.{IOChannelUtils, PackageUtil}
+import com.spotify.scio.ContextAndArgs
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.{SparkConf, SparkContext}
 import org.slf4j.LoggerFactory
@@ -32,8 +33,90 @@ object Limbo {
 
   private val logger = LoggerFactory.getLogger(Limbo.getClass)
 
+  // scalastyle:off method.length
+  def createSparkContextWip(): SparkContext = {
+    val instance = "rav-test-us-2-m"
+    val limboStagingLocation =  s"hdfs://$instance/limbo-stagingLocation"
+
+    val natIp = GcpHelpers.getNatIPofInstance(instance, "scio-playground", "us-east1-b")
+    val internalIp = GcpHelpers.getIPofInstance(instance, "scio-playground", "us-east1-b")
+
+    val masterIp = if (InetAddress.getByName(natIp).isReachable(1000)) {
+      logger.info(s"Using nat ip: $natIp")
+      DnsCacheManipulator.setDnsCache(instance, natIp)
+      natIp
+    } else {
+      logger.info(s"Using internal ip: $internalIp")
+      DnsCacheManipulator.setDnsCache(instance, internalIp)
+      internalIp
+    }/* else {
+      throw new Exception(s"Can't reach the master at $instance")
+    }  */
+
+    val workers = DataprocClient.describe("rav-test-us-2", "scio-playground")
+      .getConfig.getWorkerConfig.getInstanceNames
+
+    import scala.collection.JavaConverters._
+    workers.asScala
+      .map(w => w -> (GcpHelpers.getNatIPofInstance(w, "scio-playground", "us-east1-b"),
+        GcpHelpers.getIPofInstance(w, "scio-playground", "us-east1-b")))
+      .foreach { case (i, ips) =>
+        if (InetAddress.getByName(ips._1).isReachable(1000)) {
+          logger.info(s"Adding ${ips._1} for $i")
+          DnsCacheManipulator.setDnsCache(i, ips._1)
+        } else {
+          logger.info(s"Adding ${ips._2} for $i")
+          DnsCacheManipulator.setDnsCache(i, ips._2)
+        }
+      }
+
+    val sparkConf = new SparkConf()
+    sparkConf.setMaster("yarn")
+    //sparkConf.set("spark.submit.deployMode", "cluster")
+    sparkConf.setAppName("rav-test")
+
+    /* Only if from local */
+    //sparkConf.set("spark.driver.port", "8881")
+    //sparkConf.set("spark.driver.host", "localhost")
+    /* Only if from local */
+
+    val conf = new Configuration(false)
+    conf.addResource(new URI(s"http://$masterIp:50070/conf").toURL)
+    import scala.collection.JavaConverters._
+    sparkConf.setAll(
+      conf.iterator().asScala
+        .map(e => s"spark.hadoop.${e.getKey}" -> e.getValue)
+        .toList)
+
+    val artifacts = LimboUtil.getClassPathResources(Thread.currentThread().getContextClassLoader)
+    IOChannelUtils.setIOFactory("hdfs", new HdfsIOChannelFactory(conf))
+
+    // otherwise spark fails
+    val badLibs = Seq("netty-buffer",
+      "netty-codec",
+      "netty-common",
+      "netty-handler",
+      "netty-resolver",
+      "netty-tcnative-boringssl",
+      "netty-transport")
+    val filteredArtifacts = artifacts.filter(l => ! badLibs.exists(bl => l.contains(bl)))
+
+    val staged = PackageUtil.stageClasspathElements(filteredArtifacts.asJava, limboStagingLocation)
+    sparkConf.set("spark.yarn.jars", staged.asScala.map(_.getLocation).mkString(","))
+
+    new SparkContext(sparkConf)
+  }
+  // scalastyle:on method.length
+
+  def createLocalSparkContextWip(): SparkContext = {
+    val sparkConf = new SparkConf()
+    sparkConf.setMaster("local[*]")
+    sparkConf.setAppName("rav-test")
+    new SparkContext(sparkConf)
+  }
+
   def createSparkContext(): Unit = {
-    val project = "scio-metrics"
+    val project = "scio-playground"
     val zone = "us-central1-a"
 
     import scala.concurrent.ExecutionContext.Implicits.global
@@ -58,11 +141,11 @@ object Limbo {
   // scalastyle:off method.length
   def main(argv: Array[String]): Unit = {
     // Init - this will be automated:
-   /* val (sc, args) = ContextAndArgs(argv)
-    val (sc1, _) = ContextAndArgs(argv)
-    val spark = SparkSession.builder().master("local").getOrCreate()
 
-    LimboUtil.configureLocalGCSAccess(spark.sparkContext.hadoopConfiguration)
+    val (sc, args) = ContextAndArgs(argv)
+    val (sc1, _) = ContextAndArgs(argv)
+
+    val spark = createSparkContextWip()
 
     try {
       val scol = sc.parallelize(1 to 2)
@@ -76,71 +159,7 @@ object Limbo {
     } finally {
       // Cleanup
       spark.stop()
-    }               */
-
-    val instance = "rav-test-us-1-m"
-    val limboStagingLocation =  s"hdfs://$instance/limbo-stagingLocation"
-
-    val natIp = GcpHelpers.getNatIPofInstance(instance, "scio-metrics", "us-central1-a")
-    val internalIp = GcpHelpers.getIPofInstance(instance, "scio-metrics", "us-central1-a")
-
-    val masterIp = if (InetAddress.getByName(natIp).isReachable(1000)) {
-      logger.info(s"Using nat ip: $natIp")
-      DnsCacheManipulator.setDnsCache(instance, natIp)
-      natIp
-    } else {
-      logger.info(s"Using internal ip: $internalIp")
-      DnsCacheManipulator.setDnsCache(instance, internalIp)
-      internalIp
-    }/* else {
-      throw new Exception(s"Can't reach the master at $instance")
-    }  */
-
-    val workers = DataprocClient.describe("rav-test-us-1", "scio-metrics")
-      .getConfig.getWorkerConfig.getInstanceNames
-    import scala.collection.JavaConverters._
-    workers.asScala
-      .map(w => w -> (GcpHelpers.getNatIPofInstance(w, "scio-metrics", "us-central1-a"),
-                 GcpHelpers.getIPofInstance(w, "scio-metrics", "us-central1-a")))
-      .foreach { case (i, ips) =>
-        if (InetAddress.getByName(ips._1).isReachable(1000)) {
-          logger.info(s"Adding ${ips._1} for $i")
-          DnsCacheManipulator.setDnsCache(i, ips._1)
-        } else {
-          logger.info(s"Adding ${ips._2} for $i")
-          DnsCacheManipulator.setDnsCache(i, ips._2)
-        }
-      }
-
-    val sparkConf = new SparkConf()
-    sparkConf.setMaster("yarn")
-    //sparkConf.set("spark.submit.deployMode", "cluster")
-    sparkConf.setAppName("rav-test")
-
-    /* Only if from local */
-    sparkConf.set("spark.driver.port", "8881")
-    sparkConf.set("spark.driver.host", "localhost")
-    /* Only if from local */
-
-    val conf = new Configuration(false)
-    conf.addResource(new URI(s"http://$masterIp:50070/conf").toURL)
-    import scala.collection.JavaConverters._
-    sparkConf.setAll(
-      conf.iterator().asScala
-      .map(e => s"spark.hadoop.${e.getKey}" -> e.getValue)
-      .toList)
-
-    val artifacts = LimboUtil.getClassPathResources(Thread.currentThread().getContextClassLoader)
-
-    IOChannelUtils.setIOFactory("hdfs", new HdfsIOChannelFactory(conf))
-    PackageUtil.stageClasspathElements(artifacts.asJava, limboStagingLocation)
-    sparkConf.set("spark.yarn.jars", s"$limboStagingLocation/*")
-
-    val out = "out" + Random.nextInt()
-    logger.info(s"Output goes to $out")
-    val sc = new SparkContext(sparkConf)
-    sc.parallelize(1 to 10).saveAsTextFile(out)
-    sc.stop()
+    }
   }
   // scalastyle:on method.length
 }

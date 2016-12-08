@@ -23,11 +23,13 @@ import com.google.cloud.dataflow.sdk.util.CoderUtils
 import com.google.cloud.dataflow.sdk.values.TypeDescriptor
 import com.spotify.scio.ScioContext
 import com.spotify.scio.values.SCollection
+import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.SparkSession
 import org.slf4j.LoggerFactory
 import sh.rav.limbo.util.LimboUtil
 
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success}
 
@@ -47,7 +49,7 @@ package object limbo {
 
     private val logger = LoggerFactory.getLogger(self.getClass)
 
-    def toRDD(spark: SparkSession, minPartitions: Int = 0): Option[RDD[T]] = {
+    def toRDD(spark: SparkContext, minPartitions: Int = 0): Option[RDD[T]] = {
 
       val path = getNewMaterializePath(self.context)
 
@@ -57,7 +59,7 @@ package object limbo {
         .getPipeline.getCoderRegistry.getCoder(TypeDescriptor.of(LimboUtil.classOf[T]))
 
       val hintPartitions = if (minPartitions == 0) {
-        spark.sparkContext.defaultMinPartitions
+        spark.defaultMinPartitions
       } else {
         minPartitions
       }
@@ -69,19 +71,9 @@ package object limbo {
 
       self.context.close()
 
-      snapshot.value match {
-        case Some(Success(_)) =>
-          val rdd = spark.sparkContext
-            .textFile(path, hintPartitions).map(s => CoderUtils.decodeFromBase64(coder, s))
-          Some(rdd)
-        case Some(Failure(e)) =>
-          logger.error(s"Failed to snapshot of SCollection ${self.name} to $path due to $e")
-          None
-        case _ => {
-          logger.error(s"Failed to snapshot ${self.name} to $path")
-          None
-        }
-      }
+      val snapshotTap = Await.result(snapshot, Duration.Inf)
+      Option(spark
+        .textFile(path, hintPartitions).map(s => CoderUtils.decodeFromBase64(coder, s)))
     }
   }
 
