@@ -63,7 +63,7 @@ object DataprocClient {
              projectId: String,
              zone: String): DataprocOperationResult = {
     //TODO: hard coded xpn project
-    val xpnProject: String = "xpn-master"
+    //val xpnProject: String = "xpn-master"
     val projId = Option(projectId).getOrElse {
       // gcp java does not expose default project yet
       // https://github.com/GoogleCloudPlatform/google-cloud-java/pull/1380
@@ -82,8 +82,8 @@ object DataprocClient {
 
     val gceClusterConfig = new GceClusterConfig()
       .setZoneUri(s"$computeApiRoot/projects/$projId/zones/$gcpZone")
-      .setSubnetworkUri(
-        s"$computeApiRoot/projects/$xpnProject/regions/$region/subnetworks/$xpnSubNet")
+    //  .setSubnetworkUri(
+    //    s"$computeApiRoot/projects/$xpnProject/regions/$region/subnetworks/$xpnSubNet")
 
     val config = new ClusterConfig()
       .setGceClusterConfig(gceClusterConfig)

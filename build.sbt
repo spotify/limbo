@@ -16,7 +16,6 @@
  */
 
 val dataprocApiVersion = "v1-rev9-1.22.0"
-val dnsCacheManipulatorVersion = "1.5.1"
 val gcsConnectorVersion = "1.5.4-hadoop2"
 val googleCloudVersion = "0.6.0"
 val scioVersion = "0.2.6"
@@ -39,8 +38,18 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-yarn" % sparkVersion,
   "com.google.cloud.bigdataoss" % "gcs-connector" % gcsConnectorVersion,
   "com.google.apis" % "google-api-services-dataproc" % dataprocApiVersion,
-  "com.google.cloud" % "google-cloud" % googleCloudVersion,
-  "com.alibaba" % "dns-cache-manipulator" % dnsCacheManipulatorVersion
+  "com.google.cloud" % "google-cloud" % googleCloudVersion
+)
+
+// Exclude some of the netty deps - otherwise spark app master failes to communicate with the driver
+excludeDependencies ++= Seq(
+  "io.netty" % "netty-buffer",
+  "io.netty" % "netty-handler",
+  "io.netty" % "netty-common",
+  "io.netty" % "netty-codec",
+  "io.netty" % "netty-resolver",
+  "io.netty" % "netty-tcnative-boringssl",
+  "io.netty" % "netty-transport"
 )
 
 // otherwise has issues with Hadoop FS service discovery

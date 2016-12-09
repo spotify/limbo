@@ -19,9 +19,10 @@ package sh.rav
 
 import java.util.UUID
 
+import com.google.cloud.dataflow.sdk.runners.{BlockingDataflowPipelineRunner, DataflowPipelineRunner}
 import com.google.cloud.dataflow.sdk.util.CoderUtils
 import com.google.cloud.dataflow.sdk.values.TypeDescriptor
-import com.spotify.scio.ScioContext
+import com.spotify.scio.{ContextAndArgs, ScioContext}
 import com.spotify.scio.values.SCollection
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -31,7 +32,6 @@ import sh.rav.limbo.util.LimboUtil
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
-import scala.util.{Failure, Success}
 
 package object limbo {
 
@@ -49,8 +49,9 @@ package object limbo {
 
     private val logger = LoggerFactory.getLogger(self.getClass)
 
-    def toRDD(spark: SparkContext, minPartitions: Int = 0): Option[RDD[T]] = {
-
+    /** Returns Spark's RDD based on data from this SCollection. */
+    def toRDD(spark: SparkContext = null, minPartitions: Int = 0): Option[RDD[T]] = {
+      // First materialize/run DF job:
       val path = getNewMaterializePath(self.context)
 
       logger.info(s"Will materialize SCollection snapshot of ${self.name} to $path")
@@ -58,21 +59,38 @@ package object limbo {
       val coder = self.internal
         .getPipeline.getCoderRegistry.getCoder(TypeDescriptor.of(LimboUtil.classOf[T]))
 
-      val hintPartitions = if (minPartitions == 0) {
-        spark.defaultMinPartitions
-      } else {
-        minPartitions
-      }
-
       //TODO: Should we use num of shards to improve min partitions in RDD?
       val snapshot = self
         .map(t => CoderUtils.encodeToBase64(coder, t))
         .saveAsTextFile(path)
 
+      if (self.context.options.getRunner.isAssignableFrom(classOf[BlockingDataflowPipelineRunner]))
+      {
+        // Use non blocking runner:
+        self.context.options.setRunner(classOf[DataflowPipelineRunner])
+      }
       self.context.close()
 
-      val snapshotTap = Await.result(snapshot, Duration.Inf)
-      Option(spark
+      // Now figure out where is spark:
+      val _spark = if (spark == null) {
+        //TODO: Can this be done with Futures all the way down?
+        logger.info("Will create a new Spark context. This may take a couple of minutes ...")
+        val sparkF = SparkContextProvider.createDataprocSparkContext()
+        Await.result(sparkF, Duration.Inf)
+      } else {
+        spark
+      }
+
+      val hintPartitions = if (minPartitions == 0) {
+        _spark.defaultMinPartitions
+      } else {
+        minPartitions
+      }
+
+      // Makes sure DF data is materialized, and transfer results over to spark:
+      // TODO: delete intermediate results?
+      Await.result(snapshot, Duration.Inf)
+      Option(_spark
         .textFile(path, hintPartitions).map(s => CoderUtils.decodeFromBase64(coder, s)))
     }
   }
@@ -81,6 +99,7 @@ package object limbo {
 
     private val logger = LoggerFactory.getLogger(self.getClass)
 
+    /** Returns Scio's SCollection based on data from this RDD. */
     def toSCollection(sc: ScioContext): SCollection[T] = {
       val path = getNewMaterializePath(sc)
 
@@ -95,6 +114,12 @@ package object limbo {
       // input method here.
       import com.spotify.scio.hdfs._
       sc.hdfsTextFile(path).map(s => CoderUtils.decodeFromBase64(coder, s))
+    }
+
+    /** Returns Scio's SCollection based on data from this RDD. */
+    def toSCollection(argv: Array[String]): (ScioContext, SCollection[T]) = {
+      val (sc, _) = ContextAndArgs(argv)
+      (sc, self.toSCollection(sc))
     }
   }
 }
