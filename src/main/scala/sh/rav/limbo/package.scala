@@ -19,7 +19,6 @@ package sh.rav
 
 import java.util.UUID
 
-import com.google.cloud.dataflow.sdk.runners.{BlockingDataflowPipelineRunner, DataflowPipelineRunner}
 import com.google.cloud.dataflow.sdk.util.CoderUtils
 import com.google.cloud.dataflow.sdk.values.TypeDescriptor
 import com.spotify.scio.{ContextAndArgs, ScioContext}
@@ -29,7 +28,7 @@ import org.apache.spark.rdd.RDD
 import org.slf4j.LoggerFactory
 import sh.rav.limbo.util.LimboUtil
 
-import scala.concurrent.Await
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
 
@@ -64,22 +63,31 @@ package object limbo {
         .map(t => CoderUtils.encodeToBase64(coder, t))
         .saveAsTextFile(path)
 
-      if (self.context.options.getRunner.isAssignableFrom(classOf[BlockingDataflowPipelineRunner]))
-      {
-        // Use non blocking runner:
-        self.context.options.setRunner(classOf[DataflowPipelineRunner])
-      }
-      self.context.close()
+      import scala.concurrent.ExecutionContext.Implicits.global
+      val scioResult = Future(self.context.close())
 
       // Now figure out where is spark:
-      val _spark = if (spark == null) {
+      val sparkFuture = if (spark == null) {
         //TODO: Can this be done with Futures all the way down?
         logger.info("Will create a new Spark context. This may take a couple of minutes ...")
-        val sparkF = SparkContextProvider.createDataprocSparkContext()
-        Await.result(sparkF, Duration.Inf)
+        SparkContextProvider.createDataprocSparkContext()
       } else {
-        spark
+        Future.successful(spark)
       }
+
+      // concurrently wait for all futures (failure of any of the 3 will interrupt):
+      val wait = for {
+        _ <- scioResult
+        s <- sparkFuture
+        _ <- snapshot
+      } yield {
+        logger.info("SCollection data materialized, and Spark context is available.")
+        s
+      }
+
+      // TODO: delete intermediate results?
+      // TODO: inf wait - should we just expose future to user facing API?
+      val _spark = Await.result(wait, Duration.Inf)
 
       val hintPartitions = if (minPartitions == 0) {
         _spark.defaultMinPartitions
@@ -87,9 +95,6 @@ package object limbo {
         minPartitions
       }
 
-      // Makes sure DF data is materialized, and transfer results over to spark:
-      // TODO: delete intermediate results?
-      Await.result(snapshot, Duration.Inf)
       Option(_spark
         .textFile(path, hintPartitions).map(s => CoderUtils.decodeFromBase64(coder, s)))
     }

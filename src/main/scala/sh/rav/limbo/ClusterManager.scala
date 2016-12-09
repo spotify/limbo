@@ -20,7 +20,7 @@ package sh.rav.limbo
 import com.google.api.services.dataproc.model.Cluster
 
 import scala.collection.mutable
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 import scala.util.Random
 
 /**
@@ -34,8 +34,11 @@ object ClusterManager {
 
   sys.addShutdownHook({
     import scala.concurrent.ExecutionContext.Implicits.global
-    clusters.values.foreach(
-      _.onSuccess{ case c => DataprocClient.delete(c.getClusterName, c.getProjectId) })
+    import scala.concurrent.duration._
+    clusters
+      .values
+      .map(_.map(c => DataprocClient.delete(c.getClusterName, c.getProjectId)))
+      .map(f => Await.ready(f, 5.seconds))
   })
 
   private val clusters = mutable.Map.empty[(String, String), Future[Cluster]]
