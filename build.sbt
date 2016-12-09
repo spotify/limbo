@@ -18,8 +18,10 @@
 val dataprocApiVersion = "v1-rev9-1.22.0"
 val gcsConnectorVersion = "1.5.4-hadoop2"
 val googleCloudVersion = "0.6.0"
+val scalaTestVersion = "3.0.0"
 val scioVersion = "0.2.6"
 val sparkVersion = "2.0.2"
+val slf4jVersion = "1.7.21"
 
 organization  := "sh.rav"
 name          := "limbo"
@@ -38,7 +40,11 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-yarn" % sparkVersion,
   "com.google.cloud.bigdataoss" % "gcs-connector" % gcsConnectorVersion,
   "com.google.apis" % "google-api-services-dataproc" % dataprocApiVersion,
-  "com.google.cloud" % "google-cloud" % googleCloudVersion
+  "com.google.cloud" % "google-cloud" % googleCloudVersion,
+  "org.slf4j" % "slf4j-api" % slf4jVersion,
+  "org.slf4j" % "slf4j-simple" % slf4jVersion % "test",
+  "org.scalatest" %% "scalatest" % scalaTestVersion % "test",
+  "com.spotify" %% "scio-test" % scioVersion % "test"
 )
 
 addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
