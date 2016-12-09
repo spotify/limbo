@@ -41,6 +41,8 @@ libraryDependencies ++= Seq(
   "com.google.cloud" % "google-cloud" % googleCloudVersion
 )
 
+addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+
 // Exclude some of the netty deps - otherwise spark app master failes to communicate with the driver
 excludeDependencies ++= Seq(
   "io.netty" % "netty-buffer",
