@@ -29,7 +29,7 @@ object Limbo {
 
     val scol = sc.parallelize(1 to 2)
 
-    val rdd = scol.toRDD().get
+    val rdd = scol.toRDD()
     rdd
       .map(_ * 2)
       .saveAsTextFile(args("output"))

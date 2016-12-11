@@ -26,7 +26,7 @@ class LimboImplicitConversionTest
   "Conversion" should "support SCollection to RDD trip" in {
     val expected = 1 to 10
     runWithContexts { (scio, spark) =>
-      scio.parallelize(1 to 10).toRDD(spark).get.collect() should contain theSameElementsAs expected
+      scio.parallelize(1 to 10).toRDD(spark).collect() should contain theSameElementsAs expected
     }
   }
 
@@ -41,7 +41,7 @@ class LimboImplicitConversionTest
     val expected = 1 to 10
     runWithContexts { (scio, spark) =>
       val scio2 = getScioContextForTest()
-      scio.parallelize(1 to 10).toRDD(spark).get.toSCollection(scio2) should
+      scio.parallelize(1 to 10).toRDD(spark).toSCollection(scio2) should
         containInAnyOrder(expected)
     }
   }

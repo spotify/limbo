@@ -26,7 +26,7 @@ val (sc, args) = ContextAndArgs(argv)
 val scol = sc.parallelize(1 to 10)
 
 // Move to Spark realm
-val rdd = scol.toRDD().get
+val rdd = scol.toRDD()
 rdd
   .map(_ * 2)
   .saveAsTextFile(args("output"))

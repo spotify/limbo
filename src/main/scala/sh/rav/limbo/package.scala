@@ -49,7 +49,7 @@ package object limbo {
     private val logger = LoggerFactory.getLogger(self.getClass)
 
     /** Returns Spark's RDD based on data from this SCollection. */
-    def toRDD(spark: SparkContext = null, minPartitions: Int = 0): Option[RDD[T]] = {
+    def toRDD(spark: SparkContext = null, minPartitions: Int = 0): RDD[T] = {
       // First materialize/run DF job:
       val path = getNewMaterializePath(self.context)
 
@@ -95,8 +95,8 @@ package object limbo {
         minPartitions
       }
 
-      Option(_spark
-        .textFile(path, hintPartitions).map(s => CoderUtils.decodeFromBase64(coder, s)))
+      _spark
+        .textFile(path, hintPartitions).map(s => CoderUtils.decodeFromBase64(coder, s))
     }
   }
 
