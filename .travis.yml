@@ -9,7 +9,7 @@ cache:
     - $HOME/.ivy2/cache
 
 script:
-  - sbt test
+  - sbt clean scalastyle coverage test coverageReport coverageAggregate
 
   # Tricks to avoid unnecessary cache updates
   - find $HOME/.sbt -name "*.lock" | xargs rm
