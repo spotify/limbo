@@ -12,11 +12,11 @@ Note: Limbo is in a WIP state.
 Limbo is a Scala API which allows to leverage best of different data processing frameworks by
 allowing seamless transition between framework specific data structures.
 
-Currently Limbo provides:
+## Features
 
- * itegration between [Scio](https://github.com/spotify/scio) and [Spark](https://github.com/apache/spark)
- * progammatic Spark job submission to Apache YARN cluster
- * Google Dataproc cluster helpers
+- Itegration between [Scio](https://github.com/spotify/scio) and [Spark](https://github.com/apache/spark)
+- Programmatic Spark job submission to a Apache YARN cluster
+- Scala API for Google Dataproc cluster
 
 ## Example:
 
