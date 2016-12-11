@@ -72,8 +72,10 @@ object SparkContextProvider {
   }
 
   /** Creates local spark context used for testing or local work */
-  def createLocalSparkContext(name: String = "limbo"): SparkContext = {
+  def createLocalSparkContext(name: String = "limbo",
+                              extraSettings: Map[String, String] = Map.empty): SparkContext = {
     val sparkConf = new SparkConf()
+    sparkConf.setAll(extraSettings)
     sparkConf.setMaster("local[*]")
     sparkConf.setAppName(name)
     new SparkContext(sparkConf)

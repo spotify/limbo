@@ -17,29 +17,33 @@
 
 package sh.rav.limbo
 
-import com.google.cloud.dataflow.sdk.options.{ApplicationNameOptions, PipelineOptionsFactory}
-import com.google.cloud.dataflow.sdk.runners.inprocess.InProcessPipelineRunner
-import com.spotify.scio.ScioContext
-import com.spotify.scio.testing.{SCollectionMatchers, PipelineTestUtils => ScioTestUtils}
+import com.spotify.scio.testing.SCollectionMatchers
 import org.scalatest.{FlatSpec, Matchers}
 
 class LimboImplicitConversionTest
-  extends FlatSpec with Matchers with SCollectionMatchers with ScioTestUtils {
-
-  /** Create a new [[ScioContext]] instance for testing. */
-  def forTest(): ScioContext = {
-    val opts = PipelineOptionsFactory
-      .fromArgs(Array("--appName=" + "LimboTest"))
-      .as(classOf[ApplicationNameOptions])
-
-    opts.setRunner(classOf[InProcessPipelineRunner])
-    ScioContext(opts, List[String]())
-  }
+  extends FlatSpec with Matchers with SCollectionMatchers with TestUtils {
 
   "Conversion" should "support SCollection to RDD trip" in {
     val expected = 1 to 10
-    val sc = forTest()
-    val spark = SparkContextProvider.createLocalSparkContext()
-    sc.parallelize(1 to 10).toRDD(spark).get.collect() should contain theSameElementsAs expected
+    runWithContexts { (scio, spark) =>
+      scio.parallelize(1 to 10).toRDD(spark).get.collect() should contain theSameElementsAs expected
+    }
   }
+
+  it should "support RDD to SCollection trip" in {
+    val expected = 1 to 10
+    runWithContexts { (scio, spark) =>
+      spark.parallelize(1 to 10).toSCollection(scio) should containInAnyOrder(expected)
+    }
+  }
+
+  it should "support round trip" in {
+    val expected = 1 to 10
+    runWithContexts { (scio, spark) =>
+      val scio2 = getScioContextForTest()
+      scio.parallelize(1 to 10).toRDD(spark).get.toSCollection(scio2) should
+        containInAnyOrder(expected)
+    }
+  }
+
 }
