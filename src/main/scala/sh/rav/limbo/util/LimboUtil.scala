@@ -114,4 +114,8 @@ private[limbo] object LimboUtil {
     // no need to care about duplicates here - should be solved by the SDK uploader
     classPathJars ++ manifestJars
   }
+
+  def isTesting: Boolean = {
+    sys.env.contains("LIMBO_TESTING") || sys.props.contains("limbo.testing")
+  }
 }

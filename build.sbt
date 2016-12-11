@@ -41,7 +41,6 @@ libraryDependencies ++= Seq(
   "com.google.apis" % "google-api-services-dataproc" % dataprocApiVersion,
   "com.google.cloud" % "google-cloud" % googleCloudVersion,
   "org.slf4j" % "slf4j-api" % slf4jVersion,
-  "org.slf4j" % "slf4j-simple" % slf4jVersion % "test",
   "org.scalatest" %% "scalatest" % scalaTestVersion % "test",
   "com.spotify" %% "scio-test" % scioVersion % "test"
 )

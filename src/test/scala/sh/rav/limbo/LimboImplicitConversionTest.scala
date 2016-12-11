@@ -39,10 +39,20 @@ class LimboImplicitConversionTest
 
   it should "support round trip" in {
     val expected = 1 to 10
+    val rdd = runWithContexts { (scio, spark) =>
+      scio.parallelize(1 to 10).toRDD(spark).collect()
+    }
+    runWithContexts { (scio2, spark2) =>
+      spark2.parallelize(rdd).toSCollection(scio2) should containInAnyOrder(expected)
+    }
+  }
+
+  it should "support RDD to SCollection (from args) trip " in {
+    val expected = 1 to 10
     runWithContexts { (scio, spark) =>
-      val scio2 = getScioContextForTest()
-      scio.parallelize(1 to 10).toRDD(spark).toSCollection(scio2) should
-        containInAnyOrder(expected)
+      val (scio2, col) = spark.parallelize(1 to 10).toSCollection(Array.empty[String])
+      col should containInAnyOrder(expected)
+      scio2.close()
     }
   }
 
