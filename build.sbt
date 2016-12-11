@@ -25,7 +25,6 @@ val slf4jVersion = "1.7.21"
 
 organization  := "sh.rav"
 name          := "limbo"
-version       := "0.1.0-SNAPSHOT"
 
 scalaVersion  := "2.11.8"
 
