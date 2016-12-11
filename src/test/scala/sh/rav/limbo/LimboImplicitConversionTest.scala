@@ -50,9 +50,9 @@ class LimboImplicitConversionTest
   it should "support RDD to SCollection (from args) trip " in {
     val expected = 1 to 10
     runWithContexts { (scio, spark) =>
-      val (scio2, col) = spark.parallelize(1 to 10).toSCollection(Array.empty[String])
+      val col = spark.parallelize(1 to 10).toSCollection(Array.empty[String])
       col should containInAnyOrder(expected)
-      scio2.close()
+      col.context.close()
     }
   }
 

@@ -122,9 +122,9 @@ package object limbo {
     }
 
     /** Returns Scio's SCollection based on data from this RDD. */
-    def toSCollection(argv: Array[String]): (ScioContext, SCollection[T]) = {
+    def toSCollection(argv: Array[String]): SCollection[T] = {
       val (sc, _) = ContextAndArgs(argv)
-      (sc, self.toSCollection(sc))
+      self.toSCollection(sc)
     }
   }
 }
