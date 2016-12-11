@@ -3,6 +3,11 @@ scala:
   - 2.11.8
 jdk: oraclejdk8
 
+cache:
+  directories:
+    - $HOME/.sbt/boot
+    - $HOME/.ivy2/cache
+
 script:
   - sbt test
 
