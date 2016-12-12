@@ -36,7 +36,9 @@ object SparkContextProvider {
    * Creates YARN based spark context based on provided Hadoop configuration. YARN cluster has to
    * already exist. And Hadoop configuration URL has to be reachable (local or remote).
    */
-  def createYarnSparkContext(hadoopConfURL: URL, name: String = "limbo"): SparkContext = {
+  def createYarnSparkContext(hadoopConfURL: URL,
+                             name: String = "limbo",
+                             stagingLocation: String = "/limbo-stagingLocation"): SparkContext = {
     val sparkConf = new SparkConf()
     sparkConf.setMaster("yarn")
     sparkConf.setAppName(name)
@@ -58,7 +60,7 @@ object SparkContextProvider {
 
     // staging location used for spark deps
     val hadoopFS = conf.get(CommonConfigurationKeysPublic.FS_DEFAULT_NAME_KEY)
-    val limboStagingLocation = s"$hadoopFS/limbo-stagingLocation"
+    val limboStagingLocation = s"$hadoopFS$stagingLocation"
     logger.info(s"Limbo staging location is $limboStagingLocation")
 
     // stage spark deps/libraries
