@@ -26,10 +26,6 @@ import com.google.cloud.dataflow.sdk.options.PipelineOptions
 import com.google.cloud.dataflow.sdk.runners.DirectPipelineRunner
 import com.google.cloud.dataflow.sdk.runners.inprocess.InProcessPipelineRunner
 import com.google.cloud.dataflow.sdk.util.BigQueryTableRowIterator
-import com.google.cloud.hadoop.fs.gcs.GoogleHadoopFileSystem
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.FileSystem
-import org.apache.spark.SparkConf
 import org.slf4j.LoggerFactory
 
 import scala.reflect.ClassTag
