@@ -80,3 +80,9 @@ assemblyMergeStrategy in assembly ~= { old => {
     case s => old(s)
   }
 }
+
+// Coverage settings
+coverageExcludedPackages := Seq(
+  "<empty>",
+  "com\\.spotify\\.limbo\\.Transport"
+).mkString(";")
