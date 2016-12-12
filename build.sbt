@@ -28,8 +28,8 @@ name          := "limbo"
 
 scalaVersion  := "2.11.8"
 
-scalacOptions ++= Seq("-target:jvm-1.8", "-deprecation", "-feature", "-unchecked")
-javacOptions  ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked")
+scalacOptions ++= Seq("-target:jvm-1.7", "-deprecation", "-feature", "-unchecked")
+javacOptions  ++= Seq("-source", "1.7", "-target", "1.7", "-Xlint:unchecked")
 
 libraryDependencies ++= Seq(
   "com.spotify" %% "scio-core" % scioVersion,
