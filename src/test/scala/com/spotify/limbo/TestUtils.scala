@@ -29,8 +29,14 @@ import scala.util.Random
 
 trait TestUtils {
 
+  val limboTestingKey = "limbo.testing"
+
   def indicateTesting(): Unit = {
-    sys.props("limbo.testing") = true.toString
+    sys.props(limboTestingKey) = true.toString
+  }
+
+  def isTesting: Boolean = {
+    sys.props.contains(limboTestingKey)
   }
 
   def runWithContexts[T](fn: (ScioContext, SparkContext) => T, logLevel: String = "WARN"): T = {

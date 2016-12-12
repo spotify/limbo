@@ -18,14 +18,12 @@
 package com.spotify.limbo
 
 import com.google.cloud.dataflow.sdk.options.PipelineOptionsFactory
-import com.google.cloud.dataflow.sdk.runners.{BlockingDataflowPipelineRunner,
-                                              DataflowPipelineRunner,
-                                              DirectPipelineRunner}
+import com.google.cloud.dataflow.sdk.runners.{BlockingDataflowPipelineRunner, DataflowPipelineRunner, DirectPipelineRunner}
 import com.google.cloud.dataflow.sdk.runners.inprocess.InProcessPipelineRunner
 import com.spotify.limbo.util.LimboUtil
 import org.scalatest.{FlatSpec, Matchers}
 
-class LimboUtilTest extends FlatSpec with Matchers {
+class LimboUtilTest extends FlatSpec with Matchers with TestUtils {
 
   "isLocalDFRunner" should "identify DirectPipelineRunner as local runner" in {
     val opts = PipelineOptionsFactory.create()

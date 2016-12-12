@@ -91,7 +91,4 @@ private[limbo] object LimboUtil {
     classPathJars ++ manifestJars
   }
 
-  def isTesting: Boolean = {
-    sys.env.contains("LIMBO_TESTING") || sys.props.contains("limbo.testing")
-  }
 }
