@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rafal Wojdyla
+ * Copyright 2016 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,13 @@
  * under the License.
  */
 
-package sh.rav.limbo
+package com.spotify.limbo
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import com.google.api.services.dataproc.model.{Cluster, ClusterConfig, GceClusterConfig}
 import com.google.cloud.dataflow.sdk.options.GcpOptions.DefaultProjectFactory
+import com.spotify.limbo.util.LimboUtil
 import org.slf4j.LoggerFactory
-import sh.rav.limbo.util.LimboUtil
 
 object DataprocClient {
 

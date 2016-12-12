@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rafal Wojdyla
+ * Copyright 2016 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,13 @@
  * under the License.
  */
 
-package sh.rav.limbo
+package com.spotify.limbo
 
-import com.spotify.scio.ContextAndArgs
 import org.slf4j.LoggerFactory
 
 object Limbo {
 
   private val logger = LoggerFactory.getLogger(Limbo.getClass)
 
-  def main(argv: Array[String]): Unit = {
-    val (sc, args) = ContextAndArgs(argv)
-
-    val scol = sc.parallelize(1 to 2)
-
-    val rdd = scol.toRDD()
-    rdd
-      .map(_ * 2)
-      .saveAsTextFile(args("output"))
-  }
+  def main(argv: Array[String]): Unit = {}
 }

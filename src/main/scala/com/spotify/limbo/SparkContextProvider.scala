@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rafal Wojdyla
+ * Copyright 2016 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,16 @@
  * under the License.
  */
 
-package sh.rav.limbo
+package com.spotify.limbo
 
 import java.net.{URI, URL}
 
 import com.google.cloud.dataflow.sdk.util.{IOChannelUtils, PackageUtil}
+import com.spotify.limbo.util.LimboUtil
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.CommonConfigurationKeysPublic
 import org.apache.spark.{SparkConf, SparkContext}
 import org.slf4j.LoggerFactory
-import sh.rav.limbo.util.LimboUtil
 
 import scala.concurrent.Future
 

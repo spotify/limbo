@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rafal Wojdyla
+ * Copyright 2016 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  * under the License.
  */
 
-package sh.rav.limbo.util
+package com.spotify.limbo.util
 
 import java.io.File
 import java.net.URLClassLoader

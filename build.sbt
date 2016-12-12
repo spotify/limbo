@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rafal Wojdyla
+ * Copyright 2016 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ val scioVersion = "0.2.6"
 val sparkVersion = "2.0.2"
 val slf4jVersion = "1.7.21"
 
-organization  := "sh.rav"
+organization  := "com.spotify"
 name          := "limbo"
 
 scalaVersion  := "2.11.8"

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Rafal Wojdyla
+ * Copyright 2016 Spotify AB.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,18 @@
  * under the License.
  */
 
-package sh.rav
+package com.spotify
 
 import java.util.UUID
 
 import com.google.cloud.dataflow.sdk.util.CoderUtils
 import com.google.cloud.dataflow.sdk.values.TypeDescriptor
+import com.spotify.limbo.util.LimboUtil
 import com.spotify.scio.{ContextAndArgs, ScioContext}
 import com.spotify.scio.values.SCollection
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.slf4j.LoggerFactory
-import sh.rav.limbo.util.LimboUtil
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
