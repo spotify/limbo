@@ -51,4 +51,11 @@ class LimboUtilTest extends FlatSpec with Matchers {
     LimboUtil.isLocalDFRunner(opts) shouldBe false
   }
 
+  "getClassPathResources" should "get a list of jars from classpath" in {
+    val jars = LimboUtil.getClassPathResources(Thread.currentThread().getContextClassLoader)
+    jars should not be empty
+    jars.filter(_.contains("scio-core")) should not be empty
+    jars.filter(_.contains("spark-core")) should not be empty
+  }
+
 }
