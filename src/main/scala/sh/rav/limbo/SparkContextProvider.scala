@@ -33,8 +33,8 @@ object SparkContextProvider {
   private val logger = LoggerFactory.getLogger(SparkContextProvider.getClass)
 
   /**
-   * Creates YARN based spark context based on provided Hadoop configuration. YARN cluster has to
-   * already exist. And Hadoop configuration URL has to be reachable (local or remote).
+   * Creates a YARN based [[SparkContext]] based on provided [[Configuration]]. YARN cluster has to
+   * already exist. [[Configuration]] URL has to be reachable.
    */
   def createYarnSparkContext(hadoopConfURL: URL,
                              name: String = "limbo",
@@ -73,7 +73,7 @@ object SparkContextProvider {
     new SparkContext(sparkConf)
   }
 
-  /** Creates local spark context used for testing or local work */
+  /** Creates a local [[SparkContext]] used for testing or local work */
   def createLocalSparkContext(name: String = "limbo",
                               extraSettings: Map[String, String] = Map.empty): SparkContext = {
     val sparkConf = new SparkConf()
@@ -84,7 +84,7 @@ object SparkContextProvider {
   }
 
   /**
-   * Creates Dataproc based Spark context. If need be this will create a new Dataproc cluster.
+   * Creates a Dataproc based [[SparkContext]]. If need be it will create a new Dataproc cluster.
    */
   def createDataprocSparkContext(project: String = "scio-playground",
                                  zone: String = "us-central1-a"): Future[SparkContext] = {

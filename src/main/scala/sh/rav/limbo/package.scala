@@ -48,7 +48,7 @@ package object limbo {
 
     private val logger = LoggerFactory.getLogger(self.getClass)
 
-    /** Returns Spark's RDD based on data from this SCollection. */
+    /** Returns a Spark's [[RDD]] based on the data from this [[SCollection]]. */
     def toRDD(spark: SparkContext = null, minPartitions: Int = 0): RDD[T] = {
       // First materialize/run DF job:
       val path = getNewMaterializePath(self.context)
@@ -104,7 +104,7 @@ package object limbo {
 
     private val logger = LoggerFactory.getLogger(self.getClass)
 
-    /** Returns Scio's SCollection based on data from this RDD. */
+    /** Returns a Scio's [[SCollection]] based on the data from this [[RDD]]. */
     def toSCollection(sc: ScioContext): SCollection[T] = {
       val path = getNewMaterializePath(sc)
 
@@ -121,7 +121,7 @@ package object limbo {
       sc.hdfsTextFile(path).map(s => CoderUtils.decodeFromBase64(coder, s))
     }
 
-    /** Returns Scio's SCollection based on data from this RDD. */
+    /** Returns a Scio's [[SCollection]] based on the data from this [[RDD]]. */
     def toSCollection(argv: Array[String]): SCollection[T] = {
       val (sc, _) = ContextAndArgs(argv)
       self.toSCollection(sc)
