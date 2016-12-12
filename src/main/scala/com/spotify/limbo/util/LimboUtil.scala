@@ -48,30 +48,6 @@ private[limbo] object LimboUtil {
       runner.isAssignableFrom(classOf[InProcessPipelineRunner])
   }
 
-  def configureLocalGCSAccess(conf: SparkConf): SparkConf = {
-    require(conf != null, "Configuration should not be null")
-
-    conf.set("spark.hadoop.fs.gs.impl", classOf[GoogleHadoopFileSystem].toString)
-    conf.set("spark.hadoop.fs.gs.auth.service.account.enable", "false")
-    conf.set("spark.hadoop.fs.gs.auth.client.id", "32555940559.apps.googleusercontent.com")
-    conf.set("spark.hadoop.fs.gs.auth.client.secret", "ZmssLNjJy2998hD4CTg2ejr2")
-    conf.set("spark.hadoop.fs.gs.project.id", "_THIS_VALUE_DOES_NOT_MATTER_")
-
-    conf
-  }
-
-  def configureLocalGCSAccess(conf: Configuration): Configuration = {
-    require(conf != null, "Configuration should not be null")
-
-    conf.setClass("fs.gs.impl", classOf[GoogleHadoopFileSystem], classOf[FileSystem])
-    conf.setBoolean("fs.gs.auth.service.account.enable", false)
-    conf.set("fs.gs.auth.client.id", "32555940559.apps.googleusercontent.com")
-    conf.set("fs.gs.auth.client.secret", "ZmssLNjJy2998hD4CTg2ejr2")
-    conf.set("fs.gs.project.id", "_THIS_VALUE_DOES_NOT_MATTER_")
-
-    conf
-  }
-
   def executeWithBackOff[T](request: AbstractGoogleClientRequest[T], errorMsg: String): T = {
     // Reuse util method from BigQuery
     BigQueryTableRowIterator.executeWithBackOff(request, errorMsg)
