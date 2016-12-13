@@ -117,6 +117,7 @@ package object limbo {
 
       // Spark is using Hadoop output format to save as text file, thus we need to use HDFS
       // input method here.
+      //TODO: this is inefficient - hadoop input format does not support auto scaling!
       import com.spotify.scio.hdfs._
       sc.hdfsTextFile(path).map(s => CoderUtils.decodeFromBase64(coder, s))
     }
