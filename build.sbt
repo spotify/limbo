@@ -15,6 +15,10 @@
  * under the License.
  */
 
+organization := "com.spotify"
+name         := "limbo"
+description  := "Library for seamless transition between framework specific data structures"
+
 val dataprocApiVersion = "v1-rev9-1.22.0"
 val gcsConnectorVersion = "1.5.4-hadoop2"
 val googleCloudVersion = "0.6.0"
@@ -23,9 +27,6 @@ val scalaTestVersion = "3.0.0"
 val scioVersion = "0.2.6"
 val sparkVersion = "2.0.2"
 val slf4jVersion = "1.7.21"
-
-organization  := "com.spotify"
-name          := "limbo"
 
 scalaVersion  := "2.11.8"
 
