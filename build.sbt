@@ -52,7 +52,6 @@ libraryDependencies ++= Seq(
   "org.apache.hadoop" % "hadoop-mapreduce-client-jobclient" % hadoopVersion % "test" classifier "tests"
 )
 
-addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
 
 // Exclude some of the netty deps - otherwise spark app master failes to communicate with the driver
 excludeDependencies ++= Seq(
@@ -66,8 +65,11 @@ excludeDependencies ++= Seq(
 )
 
 dependencyOverrides ++= Set(
-  "com.google.inject" % "guice" % "3.0"
+  "com.google.inject" % "guice" % "3.0" // otherwise minicluster tests fail
 )
+
+// Add compiler plugin for macros:
+addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
 
 // otherwise has issues with Hadoop FS service discovery
 fork := true
