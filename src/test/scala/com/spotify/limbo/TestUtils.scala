@@ -70,7 +70,15 @@ trait TestUtils {
     }
   }
 
-  def runWithMiniCluster(fn: (URL) => Unit, logLevel: String = "ERROR") : Unit = {
+  def runWithMiniClusterWithURL(fn: (URL) => Unit, logLevel: String = "ERROR"): Unit = {
+    runWithMiniClusterWithConf((conf: Configuration) => {
+      val confFile = Files.createTempFile("test-conf", "xml")
+      conf.writeXml(new FileWriter(confFile.toString))
+      fn(confFile.toUri.toURL)
+    }, logLevel)
+  }
+
+  def runWithMiniClusterWithConf(fn: (Configuration) => Unit, logLevel: String = "ERROR"): Unit = {
     runWithLog4jConf({
       val dfsBuilder = new MiniDFSCluster.Builder(new Configuration())
 
@@ -83,11 +91,8 @@ trait TestUtils {
 
       val mr = MiniMRClientClusterFactory.create(this.getClass, 1, dfs.getConfiguration(0))
 
-      val confFile = Files.createTempFile("test-conf", "xml")
-      mr.getConfig.writeXml(new FileWriter(confFile.toString))
-
       try {
-        fn(confFile.toUri.toURL)
+        fn(mr.getConfig)
       } finally {
         mr.stop()
         if (dfs.isClusterUp) dfs.shutdown()

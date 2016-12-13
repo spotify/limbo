@@ -35,7 +35,7 @@ class SparkContextProviderTest extends FlatSpec with Matchers with TestUtils {
   }
 
   "createYarnSparkContext" should "be able to start and stop spark context" in {
-    runWithMiniCluster{ (confUrl) =>
+    runWithMiniClusterWithURL { (confUrl) =>
       val spark = SparkContextProvider.createYarnSparkContext(confUrl)
       try {
         spark.isLocal shouldBe false
