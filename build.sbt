@@ -18,6 +18,7 @@
 val dataprocApiVersion = "v1-rev9-1.22.0"
 val gcsConnectorVersion = "1.5.4-hadoop2"
 val googleCloudVersion = "0.6.0"
+val hadoopVersion = "2.7.2"
 val scalaTestVersion = "3.0.0"
 val scioVersion = "0.2.6"
 val sparkVersion = "2.0.2"
@@ -42,7 +43,12 @@ libraryDependencies ++= Seq(
   "com.google.cloud" % "google-cloud" % googleCloudVersion,
   "org.slf4j" % "slf4j-api" % slf4jVersion,
   "org.scalatest" %% "scalatest" % scalaTestVersion % "test",
-  "com.spotify" %% "scio-test" % scioVersion % "test"
+  "com.spotify" %% "scio-test" % scioVersion % "test",
+  "org.apache.hadoop" % "hadoop-minicluster" % hadoopVersion % "test",
+  "org.apache.hadoop" % "hadoop-common" % hadoopVersion % "test" classifier "tests",
+  "org.apache.hadoop" % "hadoop-hdfs" % hadoopVersion % "test" classifier "tests",
+  "org.apache.hadoop" % "hadoop-yarn-server-tests" % hadoopVersion % "test" classifier "tests",
+  "org.apache.hadoop" % "hadoop-mapreduce-client-jobclient" % hadoopVersion % "test" classifier "tests"
 )
 
 addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
@@ -56,6 +62,10 @@ excludeDependencies ++= Seq(
   "io.netty" % "netty-resolver",
   "io.netty" % "netty-tcnative-boringssl",
   "io.netty" % "netty-transport"
+)
+
+dependencyOverrides ++= Set(
+  "com.google.inject" % "guice" % "3.0"
 )
 
 // otherwise has issues with Hadoop FS service discovery

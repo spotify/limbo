@@ -5,3 +5,4 @@ target
 .bigquery
 .scio_repl
 .todo.txt
+.local/*

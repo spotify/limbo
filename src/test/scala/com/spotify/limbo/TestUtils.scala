@@ -17,11 +17,17 @@
 
 package com.spotify.limbo
 
+import java.io.FileWriter
+import java.net.URL
+import java.nio.file.Files
 import java.util.Properties
 
 import com.google.cloud.dataflow.sdk.options.{ApplicationNameOptions, PipelineOptionsFactory}
 import com.google.cloud.dataflow.sdk.runners.inprocess.InProcessPipelineRunner
 import com.spotify.scio.ScioContext
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.hdfs.MiniDFSCluster
+import org.apache.hadoop.mapred.MiniMRClientClusterFactory
 import org.apache.log4j.{Logger, PropertyConfigurator}
 import org.apache.spark.SparkContext
 
@@ -39,6 +45,16 @@ trait TestUtils {
     sys.props.contains(limboTestingKey)
   }
 
+  def runWithLog4jConf(thunk: => Unit, logLevel: String = "WARN"): Unit = {
+    val rootLoggerLevel = Logger.getRootLogger.getLevel
+    configTestLog4j(logLevel)
+    try {
+      thunk
+    } finally {
+      configTestLog4j(rootLoggerLevel.toString)
+    }
+  }
+
   def runWithContexts[T](fn: (ScioContext, SparkContext) => T, logLevel: String = "WARN"): T = {
     val rootLoggerLevel = Logger.getRootLogger.getLevel
     configTestLog4j(logLevel)
@@ -52,6 +68,31 @@ trait TestUtils {
       if (!scio.isClosed) scio.close()
       configTestLog4j(rootLoggerLevel.toString)
     }
+  }
+
+  def runWithMiniCluster(fn: (URL) => Unit, logLevel: String = "ERROR") : Unit = {
+    runWithLog4jConf({
+      val dfsBuilder = new MiniDFSCluster.Builder(new Configuration())
+
+      dfsBuilder
+        .numDataNodes(1)
+        .format(true)
+        .manageDataDfsDirs(true)
+        .manageNameDfsDirs(true)
+      val dfs = dfsBuilder.build()
+
+      val mr = MiniMRClientClusterFactory.create(this.getClass, 1, dfs.getConfiguration(0))
+
+      val confFile = Files.createTempFile("test-conf", "xml")
+      mr.getConfig.writeXml(new FileWriter(confFile.toString))
+
+      try {
+        fn(confFile.toUri.toURL)
+      } finally {
+        mr.stop()
+        if (dfs.isClusterUp) dfs.shutdown()
+      }
+    }, logLevel)
   }
 
   /** Create a new [[ScioContext]] instance for testing. */
