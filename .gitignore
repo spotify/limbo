@@ -1,5 +1,6 @@
 .idea
 target
+build
 *.swp
 .DS_Store
 .bigquery
