@@ -21,19 +21,20 @@ import java.nio.channels.{Channels, ReadableByteChannel, WritableByteChannel}
 
 import com.google.cloud.dataflow.sdk.util.IOChannelFactory
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.hadoop.fs.{FileStatus, FileSystem, Path}
 
 /**
- * HDFS compatible implementation of [[IOChannelFactory]]
+ * Hadoop [[FileSystem]] compatible implementation of [[IOChannelFactory]].
  * @param conf Hadoop configuration
  */
-class HdfsIOChannelFactory(conf: Configuration) extends IOChannelFactory {
+class HadoopFSIOChannelFactory(conf: Configuration) extends IOChannelFactory {
   private val fs = FileSystem.get(conf)
 
   // scalastyle:off method.name
   override def `match`(spec: String): java.util.Collection[String] = {
     import scala.collection.JavaConverters._
-    fs.globStatus(new Path(spec)).map(_.getPath.toString).toList.asJavaCollection
+    Option(fs.globStatus(new Path(spec))).getOrElse(Array.empty[FileStatus])
+      .map(_.getPath.toString).toList.asJavaCollection
   }
   // scalastyle:on method.name
 
@@ -52,7 +53,9 @@ class HdfsIOChannelFactory(conf: Configuration) extends IOChannelFactory {
   }
 
   override def resolve(path: String, other: String): String = {
-    if (new Path(other).isAbsolute) {
+    if (other.isEmpty) {
+      path
+    } else if (new Path(other).isAbsolute) {
       other
     } else {
       new Path(path, other).toString

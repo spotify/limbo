@@ -56,7 +56,7 @@ object SparkContextProvider {
 
     // prepare to stage spark deps/libraries
     val artifacts = LimboUtil.getClassPathResources(Thread.currentThread().getContextClassLoader)
-    IOChannelUtils.setIOFactory("hdfs", new HdfsIOChannelFactory(conf))
+    IOChannelUtils.setIOFactory("hdfs", new HadoopFSIOChannelFactory(conf))
 
     // staging location used for spark deps
     val hadoopFS = conf.get(CommonConfigurationKeysPublic.FS_DEFAULT_NAME_KEY)
