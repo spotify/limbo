@@ -79,6 +79,7 @@ object SparkContextProvider {
     val sparkConf = new SparkConf()
     sparkConf.setAll(extraSettings)
     sparkConf.setMaster("local[*]")
+    sparkConf.set("spark.driver.allowMultipleContexts", true.toString)
     sparkConf.setAppName(name)
     new SparkContext(sparkConf)
   }

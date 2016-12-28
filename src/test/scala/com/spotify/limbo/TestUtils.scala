@@ -148,8 +148,7 @@ trait TestUtils {
     indicateTesting()
     SparkContextProvider.createLocalSparkContext(
       "limbo-test",
-      Map("spark.driver.allowMultipleContexts" -> true.toString,
-          "spark.ui.port" -> (Random.nextInt(4040) + 1024).toString))
+      Map("spark.ui.port" -> (Random.nextInt(4040) + 1024).toString))
   }
 
   def configTestLog4j(level: String): Unit = {
