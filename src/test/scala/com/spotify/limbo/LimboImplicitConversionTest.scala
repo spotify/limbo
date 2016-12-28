@@ -27,7 +27,7 @@ class LimboImplicitConversionTestAsync
 
   "Conversion" should "support SCollection to RDD trip" in {
     val expected = 1 to 10
-    asyncRunWithContexts { (scio, spark) =>
+    withAsyncContexts { (scio, spark) =>
       scio.parallelize(1 to 10).toRDD(spark).map { rdd =>
         rdd.collect() should contain theSameElementsAs expected
       }
@@ -36,10 +36,10 @@ class LimboImplicitConversionTestAsync
 
   it should "support round trip" in {
     val expected = 1 to 10
-    asyncRunWithContexts { (scio, spark) =>
+    withAsyncContexts { (scio, spark) =>
       scio.parallelize(1 to 10).toRDD(spark).map(_.collect())
     }.map { col =>
-      runWithContexts { (scio2, spark2) =>
+      withContexts { (scio2, spark2) =>
         spark2.parallelize(col).toSCollection(scio2) should containInAnyOrder(expected)
       }
     }
@@ -53,14 +53,14 @@ class LimboImplicitConversionTestSync
 
   "Conversion" should "support RDD to SCollection trip" in {
     val expected = 1 to 10
-    runWithContexts { (scio, spark) =>
+    withContexts { (scio, spark) =>
       spark.parallelize(1 to 10).toSCollection(scio) should containInAnyOrder(expected)
     }
   }
 
   it should "support RDD to SCollection (from args) trip " in {
     val expected = 1 to 10
-    runWithContexts { (scio, spark) =>
+    withContexts { (scio, spark) =>
       val col = spark.parallelize(1 to 10).toSCollection(Array.empty[String])
       col should containInAnyOrder(expected)
       col.context.close()
@@ -75,7 +75,7 @@ class LimboTapImplicitConversionTestSync
 
   "Tap Conversion" should "support TextTap to RDD[String] trip" in withTempOutDir { tempDir =>
     val expected = (1 to 10).map(_.toString)
-    asyncRunWithContexts { (scio, spark) =>
+    withAsyncContexts { (scio, spark) =>
       scio.parallelize(1 to 10).map(_.toString).saveAsTextFile(tempDir)
         .map(_.open(spark).collect() should contain theSameElementsAs expected)
     }

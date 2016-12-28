@@ -46,7 +46,8 @@ trait TestUtils {
     sys.props.contains(limboTestingKey)
   }
 
-  def runWithLog4jConf(thunk: => Unit, logLevel: String = "WARN"): Unit = {
+  /** Log4j configuration fixture for tests */
+  def withLog4jConf(thunk: => Unit, logLevel: String = "WARN"): Unit = {
     val rootLoggerLevel = Logger.getRootLogger.getLevel
     configTestLog4j(logLevel)
     try {
@@ -56,7 +57,8 @@ trait TestUtils {
     }
   }
 
-  def asyncRunWithContexts[T]
+  /** Asynchronous [[ScioContext]] and [[SparkContext]] fixture for tests */
+  def withAsyncContexts[T]
   (fn: (ScioContext, SparkContext) => Future[T], logLevel: String = "WARN"): Future[T] = {
     val rootLoggerLevel = Logger.getRootLogger.getLevel
     configTestLog4j(logLevel)
@@ -76,7 +78,8 @@ trait TestUtils {
     result
   }
 
-  def runWithContexts[T](fn: (ScioContext, SparkContext) => T, logLevel: String = "WARN"): T = {
+  /** Synchronous [[ScioContext]] and [[SparkContext]] fixture for tests */
+  def withContexts[T](fn: (ScioContext, SparkContext) => T, logLevel: String = "WARN"): T = {
     val rootLoggerLevel = Logger.getRootLogger.getLevel
     configTestLog4j(logLevel)
 
@@ -91,16 +94,18 @@ trait TestUtils {
     }
   }
 
-  def runWithMiniClusterWithURL(fn: (URL) => Unit, logLevel: String = "ERROR"): Unit = {
-    runWithMiniClusterWithConf((conf: Configuration) => {
+  /** Hadoop Minicluster (local HDFS+YARN) fixture for tests with configuration at given [[URL]] */
+  def withMiniClusterWithURL(fn: (URL) => Unit, logLevel: String = "ERROR"): Unit = {
+    withMiniClusterWithConf((conf: Configuration) => {
       val confFile = Files.createTempFile("test-conf", "xml")
       conf.writeXml(new FileWriter(confFile.toString))
       fn(confFile.toUri.toURL)
     }, logLevel)
   }
 
-  def runWithMiniClusterWithConf(fn: (Configuration) => Unit, logLevel: String = "ERROR"): Unit = {
-    runWithLog4jConf({
+  /** Hadoop Minicluster (local HDFS+YARN) fixture for tests with configuration object */
+  def withMiniClusterWithConf(fn: (Configuration) => Unit, logLevel: String = "ERROR"): Unit = {
+    withLog4jConf({
       val dfsBuilder = new MiniDFSCluster.Builder(new Configuration())
 
       dfsBuilder
@@ -122,9 +127,9 @@ trait TestUtils {
   }
 
   /** File fixture for tests */
-  def withTempOutDir[T](testCode: (String) => T): T = {
+  def withTempOutDir[T](thunk: (String) => T): T = {
     val tempDir = Files.createTempDirectory("limbo-temp-dir")
-    testCode(new File(tempDir.toFile, "out").getCanonicalPath)
+    thunk(new File(tempDir.toFile, "out").getCanonicalPath)
   }
 
   /** Create a new [[ScioContext]] instance for testing. */

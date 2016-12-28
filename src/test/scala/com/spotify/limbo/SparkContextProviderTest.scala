@@ -22,7 +22,7 @@ import org.scalatest.{FlatSpec, Matchers}
 class SparkContextProviderTest extends FlatSpec with Matchers with TestUtils {
 
   "createLocalSparkContext" should "be able to start and stop spark context" in {
-    runWithLog4jConf {
+    withLog4jConf {
       val spark = SparkContextProvider.createLocalSparkContext()
       try {
         spark.isLocal shouldBe true
@@ -35,7 +35,7 @@ class SparkContextProviderTest extends FlatSpec with Matchers with TestUtils {
   }
 
   "createYarnSparkContext" should "be able to start and stop spark context" in {
-    runWithMiniClusterWithURL { (confUrl) =>
+    withMiniClusterWithURL { (confUrl) =>
       val spark = SparkContextProvider.createYarnSparkContext(confUrl)
       try {
         spark.isLocal shouldBe false

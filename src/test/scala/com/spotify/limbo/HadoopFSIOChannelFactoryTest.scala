@@ -29,7 +29,7 @@ import org.scalatest.{FlatSpec, Matchers}
 class HadoopFSIOChannelFactoryTest extends FlatSpec with Matchers with TestUtils {
 
   "HadoopFSIOChannelFactory" should "support touch/create" in {
-    runWithMiniClusterWithConf { (conf: Configuration) =>
+    withMiniClusterWithConf { (conf: Configuration) =>
       val dfs = FileSystem.get(conf)
       val testFile = new Path("/foobar")
 
@@ -49,7 +49,7 @@ class HadoopFSIOChannelFactoryTest extends FlatSpec with Matchers with TestUtils
   }
 
   it should "support match" in {
-    runWithMiniClusterWithConf { (conf: Configuration) =>
+    withMiniClusterWithConf { (conf: Configuration) =>
       val dfs = FileSystem.get(conf)
 
       dfs.mkdirs(new Path("/test"))
@@ -66,7 +66,7 @@ class HadoopFSIOChannelFactoryTest extends FlatSpec with Matchers with TestUtils
   }
 
   it should "support write" in {
-    runWithMiniClusterWithConf { (conf: Configuration) =>
+    withMiniClusterWithConf { (conf: Configuration) =>
       val dfs = FileSystem.get(conf)
       val testFile = new Path("/foobar")
       val text = "ala ma kota"
@@ -89,7 +89,7 @@ class HadoopFSIOChannelFactoryTest extends FlatSpec with Matchers with TestUtils
   }
 
   it should "support open/read" in {
-    runWithMiniClusterWithConf { (conf: Configuration) =>
+    withMiniClusterWithConf { (conf: Configuration) =>
       val dfs = FileSystem.get(conf)
       val testFile = new Path("/foobar")
       val text = "ala ma kota"
@@ -112,7 +112,7 @@ class HadoopFSIOChannelFactoryTest extends FlatSpec with Matchers with TestUtils
   }
 
   it should "support size" in {
-    runWithMiniClusterWithConf { (conf: Configuration) =>
+    withMiniClusterWithConf { (conf: Configuration) =>
       val dfs = FileSystem.get(conf)
       val testFile = new Path("/foobar")
       val text = "ala ma kota"
