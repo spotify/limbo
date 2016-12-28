@@ -31,3 +31,8 @@ rdd
   .map(_ * 2)
   .saveAsTextFile(args("output"))
 ```
+
+## Code of conduct
+
+This project adheres to the [Open Code of Conduct](https://github.com/spotify/code-of-conduct/blob/master/code-of-conduct.md).
+By participating, you are expected to honor this code.
