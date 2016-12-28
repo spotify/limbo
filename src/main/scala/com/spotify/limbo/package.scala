@@ -137,6 +137,7 @@ package object limbo {
 
     /** Open data set as a [[DataFrame]]. */
     def open(spark: SparkContext): DataFrame = {
+      require(self.parent.isDefined, "Source tap has to have a parent tap with table reference")
 
       val table = self.parent.get.asInstanceOf[BigQueryTap].table
 
