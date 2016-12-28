@@ -68,3 +68,17 @@ class LimboImplicitConversionTestSync
   }
 
 }
+
+
+class LimboTapImplicitConversionTestSync
+  extends AsyncFlatSpec with Matchers with SCollectionMatchers with TestUtils {
+
+  "Tap Conversion" should "support TextTap to RDD[String] trip" in withTempOutDir { tempDir =>
+    val expected = (1 to 10).map(_.toString)
+    asyncRunWithContexts { (scio, spark) =>
+      scio.parallelize(1 to 10).map(_.toString).saveAsTextFile(tempDir)
+        .map(_.open(spark).collect() should contain theSameElementsAs expected)
+    }
+  }
+
+}

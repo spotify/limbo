@@ -17,7 +17,7 @@
 
 package com.spotify.limbo
 
-import java.io.FileWriter
+import java.io.{File, FileWriter}
 import java.net.URL
 import java.nio.file.Files
 import java.util.Properties
@@ -119,6 +119,12 @@ trait TestUtils {
         if (dfs.isClusterUp) dfs.shutdown()
       }
     }, logLevel)
+  }
+
+  /** File fixture for tests */
+  def withTempOutDir[T](testCode: (String) => T): T = {
+    val tempDir = Files.createTempDirectory("limbo-temp-dir")
+    testCode(new File(tempDir.toFile, "out").getCanonicalPath)
   }
 
   /** Create a new [[ScioContext]] instance for testing. */
