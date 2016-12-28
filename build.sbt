@@ -45,7 +45,7 @@ libraryDependencies ++= Seq(
   "com.google.apis" % "google-api-services-dataproc" % dataprocApiVersion,
   "com.google.cloud" % "google-cloud" % googleCloudVersion,
   "org.slf4j" % "slf4j-api" % slf4jVersion,
-  "org.scalatest" %% "scalatest" % scalaTestVersion % "test",
+  "org.scalatest" %% "scalatest" % scalaTestVersion % "it,test",
   "com.spotify" %% "scio-test" % scioVersion % "test",
   "org.apache.hadoop" % "hadoop-minicluster" % hadoopVersion % "test",
   "org.apache.hadoop" % "hadoop-common" % hadoopVersion % "test" classifier "tests",
@@ -53,7 +53,6 @@ libraryDependencies ++= Seq(
   "org.apache.hadoop" % "hadoop-yarn-server-tests" % hadoopVersion % "test" classifier "tests",
   "org.apache.hadoop" % "hadoop-mapreduce-client-jobclient" % hadoopVersion % "test" classifier "tests"
 )
-
 
 // Exclude some of the netty deps - otherwise spark app master failes to communicate with the driver
 excludeDependencies ++= Seq(
@@ -72,6 +71,10 @@ dependencyOverrides ++= Set(
 
 // Add compiler plugin for macros:
 addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+
+// Integration tests
+configs( config("it") extend(Test) )
+Defaults.itSettings
 
 // otherwise has issues with Hadoop FS service discovery
 fork := true
