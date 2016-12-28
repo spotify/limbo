@@ -132,8 +132,8 @@ package object limbo {
     }
   }
 
-  implicit class BigQueryTapToRDD[T: TypeTag: ClassTag](val self: Tap[T])
-                                                       (implicit ev: T <:< HasAnnotation) {
+  implicit class BigQueryTapToRDD[T: ClassTag](val self: Tap[T])
+                                              (implicit ev: T <:< HasAnnotation) {
 
     /** Open data set as a [[DataFrame]]. */
     def open(spark: SparkContext): DataFrame = {
