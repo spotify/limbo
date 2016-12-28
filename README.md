@@ -1,9 +1,9 @@
 Limbo
 =====
 
-[![Build Status](https://travis-ci.org/ravwojdyla/limbo.svg?branch=master)](https://travis-ci.org/ravwojdyla/limbo)
-[![codecov.io](https://codecov.io/github/ravwojdyla/limbo/coverage.svg?branch=master)](https://codecov.io/github/ravwojdyla/limbo?branch=master)
-[![GitHub license](https://img.shields.io/github/license/ravwojdyla/limbo.svg)](./LICENSE)
+[![Build Status](https://travis-ci.org/spotify/limbo.svg?branch=master)](https://travis-ci.org/spotify/limbo)
+[![codecov.io](https://codecov.io/github/spotify/limbo/coverage.svg?branch=master)](https://codecov.io/github/spotify/limbo?branch=master)
+[![GitHub license](https://img.shields.io/github/license/spotify/limbo.svg)](./LICENSE)
 
 ## Raison d'être:
 
