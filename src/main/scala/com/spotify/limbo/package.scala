@@ -30,7 +30,7 @@ import com.spotify.scio.values.SCollection
 import com.spotify.scio.{ContextAndArgs, ScioContext}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
