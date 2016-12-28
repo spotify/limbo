@@ -19,31 +19,42 @@ package com.spotify.limbo
 
 import com.spotify.scio.testing.SCollectionMatchers
 import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.AsyncFlatSpec
 
-class LimboImplicitConversionTest
-  extends FlatSpec with Matchers with SCollectionMatchers with TestUtils {
+
+class LimboImplicitConversionTestAsync
+  extends AsyncFlatSpec with Matchers with SCollectionMatchers with TestUtils {
 
   "Conversion" should "support SCollection to RDD trip" in {
     val expected = 1 to 10
-    runWithContexts { (scio, spark) =>
-      scio.parallelize(1 to 10).toRDD(spark).collect() should contain theSameElementsAs expected
-    }
-  }
-
-  it should "support RDD to SCollection trip" in {
-    val expected = 1 to 10
-    runWithContexts { (scio, spark) =>
-      spark.parallelize(1 to 10).toSCollection(scio) should containInAnyOrder(expected)
+    asyncRunWithContexts { (scio, spark) =>
+      scio.parallelize(1 to 10).toRDD(spark).map { rdd =>
+        rdd.collect() should contain theSameElementsAs expected
+      }
     }
   }
 
   it should "support round trip" in {
     val expected = 1 to 10
-    val rdd = runWithContexts { (scio, spark) =>
-      scio.parallelize(1 to 10).toRDD(spark).collect()
+    asyncRunWithContexts { (scio, spark) =>
+      scio.parallelize(1 to 10).toRDD(spark).map(_.collect())
+    }.map { col =>
+      runWithContexts { (scio2, spark2) =>
+        spark2.parallelize(col).toSCollection(scio2) should containInAnyOrder(expected)
+      }
     }
-    runWithContexts { (scio2, spark2) =>
-      spark2.parallelize(rdd).toSCollection(scio2) should containInAnyOrder(expected)
+  }
+
+}
+
+
+class LimboImplicitConversionTestSync
+  extends FlatSpec with Matchers with SCollectionMatchers with TestUtils {
+
+  "Conversion" should "support RDD to SCollection trip" in {
+    val expected = 1 to 10
+    runWithContexts { (scio, spark) =>
+      spark.parallelize(1 to 10).toSCollection(scio) should containInAnyOrder(expected)
     }
   }
 

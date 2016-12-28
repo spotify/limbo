@@ -24,8 +24,9 @@ val gcsConnectorVersion = "1.5.4-hadoop2"
 val googleCloudVersion = "0.6.0"
 val hadoopVersion = "2.7.2"
 val scalaTestVersion = "3.0.0"
-val scioVersion = "0.2.6"
+val scioVersion = "0.2.8"
 val sparkVersion = "2.0.2"
+val sparkBigQueryVersion = "0.1.2"
 val slf4jVersion = "1.7.21"
 
 scalaVersion  := "2.11.8"
@@ -39,6 +40,7 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % sparkVersion,
   "org.apache.spark" %% "spark-sql" % sparkVersion,
   "org.apache.spark" %% "spark-yarn" % sparkVersion,
+  "com.spotify" %% "spark-bigquery" % sparkBigQueryVersion,
   "com.google.cloud.bigdataoss" % "gcs-connector" % gcsConnectorVersion,
   "com.google.apis" % "google-api-services-dataproc" % dataprocApiVersion,
   "com.google.cloud" % "google-cloud" % googleCloudVersion,

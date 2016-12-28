@@ -22,15 +22,20 @@ import java.util.UUID
 import com.google.cloud.dataflow.sdk.util.CoderUtils
 import com.google.cloud.dataflow.sdk.values.TypeDescriptor
 import com.spotify.limbo.util.LimboUtil
-import com.spotify.scio.{ContextAndArgs, ScioContext}
+import com.spotify.scio.bigquery.TableRow
+import com.spotify.scio.bigquery.types.BigQueryType
+import com.spotify.scio.bigquery.types.BigQueryType.HasAnnotation
+import com.spotify.scio.io.{BigQueryTap, Tap, TextTap}
 import com.spotify.scio.values.SCollection
+import com.spotify.scio.{ContextAndArgs, ScioContext}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.slf4j.LoggerFactory
 
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration.Duration
+import scala.concurrent.Future
 import scala.reflect.ClassTag
+import scala.reflect.runtime.universe._
 
 package object limbo {
 
@@ -48,8 +53,13 @@ package object limbo {
 
     private val logger = LoggerFactory.getLogger(self.getClass)
 
-    /** Returns a Spark's [[RDD]] based on the data from this [[SCollection]]. */
-    def toRDD(spark: SparkContext = null, minPartitions: Int = 0): RDD[T] = {
+    /** Returns a [[Future]] of a Spark's [[RDD]] based on the data from this [[SCollection]]. */
+    def toRDD(spark: SparkContext): Future[RDD[T]] = {
+      self.toRDD(Future.successful(spark))
+    }
+
+    /** Returns a [[Future]] of a Spark's [[RDD]] based on the data from this [[SCollection]]. */
+    def toRDD(spark: Future[SparkContext] = null): Future[RDD[T]] = {
       // First materialize/run DF job:
       val path = getNewMaterializePath(self.context)
 
@@ -64,39 +74,23 @@ package object limbo {
         .saveAsTextFile(path)
 
       import scala.concurrent.ExecutionContext.Implicits.global
-      val scioResult = Future(self.context.close())
 
       // Now figure out where is spark:
-      val sparkFuture = if (spark == null) {
+      val sparkFuture = Option(spark).getOrElse {
         //TODO: Can this be done with Futures all the way down?
         logger.info("Will create a new Spark context. This may take a couple of minutes ...")
         SparkContextProvider.createDataprocSparkContext()
-      } else {
-        Future.successful(spark)
       }
 
-      // concurrently wait for all futures (failure of any of the 3 will interrupt):
-      val wait = for {
-        _ <- scioResult
+      for {
         s <- sparkFuture
         _ <- snapshot
       } yield {
         logger.info("SCollection data materialized, and Spark context is available.")
-        s
+        // TODO: hint about partitions?
+        // TODO: delete intermediate results?
+        s.textFile(path).map(s => CoderUtils.decodeFromBase64(coder, s))
       }
-
-      // TODO: delete intermediate results?
-      // TODO: inf wait - should we just expose future to user facing API?
-      val _spark = Await.result(wait, Duration.Inf)
-
-      val hintPartitions = if (minPartitions == 0) {
-        _spark.defaultMinPartitions
-      } else {
-        minPartitions
-      }
-
-      _spark
-        .textFile(path, hintPartitions).map(s => CoderUtils.decodeFromBase64(coder, s))
     }
   }
 
@@ -110,7 +104,7 @@ package object limbo {
 
       val coder = sc.pipeline.getCoderRegistry.getCoder(TypeDescriptor.of(LimboUtil.classOf[T]))
 
-      logger.info(s"Will materialize RDD snapshot of ${self.name} to $path")
+      logger.info(s"Will materialize RDD snapshot of ${self.toString()} to $path")
 
       //TODO: should this be some kind of future?
       self.map(t => CoderUtils.encodeToBase64(coder, t)).saveAsTextFile(path)
@@ -128,4 +122,41 @@ package object limbo {
       self.toSCollection(sc)
     }
   }
+
+  implicit class TextTapToRDD[T: ClassTag](val self: Tap[T])(implicit ev: T <:< String) {
+
+    /** Open data set as a [[RDD]]. */
+    def open(spark: SparkContext): RDD[String] = {
+      val path = self.asInstanceOf[TextTap].path
+      spark.textFile(path)
+    }
+  }
+
+  implicit class BigQueryTapToRDD[T: TypeTag: ClassTag](val self: Tap[T])
+                                                       (implicit ev: T <:< HasAnnotation) {
+
+    /** Open data set as a [[DataFrame]]. */
+    def open(spark: SparkContext): DataFrame = {
+
+      val table = self.parent.get.asInstanceOf[BigQueryTap].table
+
+      import com.spotify.spark.bigquery._
+      SparkSession.builder().getOrCreate().sqlContext.bigQueryTable(table)
+    }
+  }
+
+  implicit class TypedBigQueryTapToRDD[T: TypeTag: ClassTag](val self: Tap[T])
+                                                            (implicit ev: T <:< HasAnnotation) {
+
+    /** Open data set as a BigQuery typed [[RDD]]. */
+    def typedOpen(spark: SparkContext): RDD[T] = {
+      self.open(spark)
+        .map { r =>
+          // TODO: validate: what if nested records
+          r.schema.fieldNames.foldLeft(new TableRow())((bqRow, n) => bqRow.set(n, r.getAs[Any](n)))
+        }
+        .map(BigQueryType[T].fromTableRow)
+    }
+  }
+
 }

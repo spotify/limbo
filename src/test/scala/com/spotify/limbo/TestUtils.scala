@@ -31,6 +31,7 @@ import org.apache.hadoop.mapred.MiniMRClientClusterFactory
 import org.apache.log4j.{Logger, PropertyConfigurator}
 import org.apache.spark.SparkContext
 
+import scala.concurrent.Future
 import scala.util.Random
 
 trait TestUtils {
@@ -53,6 +54,26 @@ trait TestUtils {
     } finally {
       configTestLog4j(rootLoggerLevel.toString)
     }
+  }
+
+  def asyncRunWithContexts[T]
+  (fn: (ScioContext, SparkContext) => Future[T], logLevel: String = "WARN"): Future[T] = {
+    val rootLoggerLevel = Logger.getRootLogger.getLevel
+    configTestLog4j(logLevel)
+
+    val scio = getScioContextForTest()
+    val spark = getSparkContextForTest()
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val result = try {
+      fn(scio, spark)
+    } finally {
+      if (!scio.isClosed) scio.close()
+    }
+    result.onComplete { _ =>
+      if (!spark.isStopped) spark.stop()
+      configTestLog4j(rootLoggerLevel.toString)
+    }
+    result
   }
 
   def runWithContexts[T](fn: (ScioContext, SparkContext) => T, logLevel: String = "WARN"): T = {
