@@ -150,7 +150,7 @@ package object limbo {
 
     /** Open data set as a BigQuery typed [[RDD]]. */
     def typedOpen(spark: SparkContext): RDD[T] = {
-      self.open(spark)
+      self.open(spark).rdd
         .map { r =>
           // TODO: validate: what if nested records
           r.schema.fieldNames.foldLeft(new TableRow())((bqRow, n) => bqRow.set(n, r.getAs[Any](n)))
