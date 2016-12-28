@@ -72,6 +72,8 @@ dependencyOverrides ++= Set(
 // Add compiler plugin for macros:
 addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
 
+parallelExecution in Test := false
+
 // Integration tests
 configs( config("it") extend(Test) )
 Defaults.itSettings
