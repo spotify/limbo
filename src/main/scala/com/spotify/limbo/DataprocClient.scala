@@ -57,7 +57,14 @@ object DataprocClient {
   }
 
   /**
-   *  Create default Dataproc cluster by infering information by the environment
+   *  Create default Dataproc cluster with a given name
+   */
+  def create(clusterName: String): DataprocOperationResult = {
+    create(clusterName, null, null)
+  }
+
+  /**
+   *  Create default Dataproc cluster in given project/zone with a given name
    */
   def create(clusterName: String,
              projectId: String,

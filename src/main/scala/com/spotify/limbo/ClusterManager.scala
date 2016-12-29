@@ -43,7 +43,7 @@ object ClusterManager {
 
   private val clusters = mutable.Map.empty[(String, String), Future[Cluster]]
 
-  private def genClusterName(name: String): String = {
+  private[limbo] def genClusterName(name: String): String = {
     val username = sys.props("user.name")
     s"$username-$name-" + Random.nextInt(100000)
   }
