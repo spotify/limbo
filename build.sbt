@@ -107,3 +107,34 @@ coverageExcludedPackages := Seq(
   "<empty>",
   "com\\.spotify\\.limbo\\.Transport"
 ).mkString(";")
+
+// Release settings
+licenses += "Apache-2.0" -> url("http://opensource.org/licenses/Apache-2.0")
+releasePublishArtifactsAction := PgpKeys.publishSigned.value
+publishMavenStyle             := true
+publishArtifact in Test       := false
+sonatypeProfileName           := "com.spotify"
+pomExtra                      := {
+  <url>https://github.com/spotify/limbo</url>
+  <scm>
+    <url>git@github.com/spotify/limbo.git</url>
+    <connection>scm:git:git@github.com:spotify/limbo.git</connection>
+  </scm>
+  <developers>
+    <developer>
+      <id>ravwojdyla</id>
+      <name>Rafal Wojdyla</name>
+      <url>https://twitter.com/ravwojdyla</url>
+    </developer>
+  </developers>
+}
+
+credentials ++= (for {
+  username <- sys.env.get("SONATYPE_USERNAME")
+  password <- sys.env.get("SONATYPE_PASSWORD")
+} yield
+Credentials(
+  "Sonatype Nexus Repository Manager",
+  "oss.sonatype.org",
+  username,
+  password)).toSeq
