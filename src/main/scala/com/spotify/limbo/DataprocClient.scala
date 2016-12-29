@@ -18,6 +18,7 @@
 package com.spotify.limbo
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
+import com.google.api.services.dataproc.DataprocScopes
 import com.google.api.services.dataproc.model.{Cluster, ClusterConfig, GceClusterConfig}
 import com.google.cloud.dataflow.sdk.options.GcpOptions.DefaultProjectFactory
 import com.spotify.limbo.util.LimboUtil
@@ -30,7 +31,9 @@ object DataprocClient {
   private[limbo] val computeApiRoot = "https://www.googleapis.com/compute/v1"
   private[limbo] lazy val defaultDataprocClient = {
     val username = sys.props("user.name")
-    Transport.newDataprocClient(GoogleCredential.getApplicationDefault, s"limbo-$username")
+    Transport.newDataprocClient(
+      GoogleCredential.getApplicationDefault.createScoped(DataprocScopes.all()),
+      s"limbo-$username")
   }
 
   /**
