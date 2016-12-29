@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # Copyright 2016 Spotify AB.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,9 +13,8 @@
 # specific language governing permissions and limitations
 # under the License.
 
-mkdir -p /home/travis/.config/gcloud
-cat << EOF > /home/travis/.config/gcloud/properties
+[core]
+project = data-integration-test
+
 [compute]
 zone = europe-west1-d
-
-EOF

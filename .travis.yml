@@ -11,12 +11,12 @@ cache:
 
 env:
   global:
+    - CLOUDSDK_CONFIG=$TRAVIS_BUILD_DIR/.travis
     - GOOGLE_APPLICATION_CREDENTIALS=$TRAVIS_BUILD_DIR/.travis/data-integration-test-0acbc82d8523.json
 
 # GCP credentials for integration test
 before_install:
   - openssl aes-256-cbc -K $encrypted_b7bb6f667b3b_key -iv $encrypted_b7bb6f667b3b_iv -in .travis/data-integration-test-0acbc82d8523.json.enc -out .travis/data-integration-test-0acbc82d8523.json -d
-  - .travis/makeGcpPropertiesFile.sh
 
 script:
   - sbt clean scalastyle coverage test it:test coverageReport coverageAggregate
