@@ -21,7 +21,6 @@ import com.spotify.scio.testing.SCollectionMatchers
 import org.scalatest.{FlatSpec, Matchers}
 import org.scalatest.AsyncFlatSpec
 
-
 class LimboImplicitConversionTestAsync
   extends AsyncFlatSpec with Matchers with SCollectionMatchers with TestUtils {
 
@@ -47,7 +46,6 @@ class LimboImplicitConversionTestAsync
 
 }
 
-
 class LimboImplicitConversionTestSync
   extends FlatSpec with Matchers with SCollectionMatchers with TestUtils {
 
@@ -68,7 +66,6 @@ class LimboImplicitConversionTestSync
   }
 
 }
-
 
 class LimboTapImplicitConversionTestSync
   extends AsyncFlatSpec with Matchers with SCollectionMatchers with TestUtils {
