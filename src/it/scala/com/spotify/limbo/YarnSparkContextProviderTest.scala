@@ -19,13 +19,13 @@ package com.spotify.limbo
 
 import org.scalatest.{FlatSpec, Matchers}
 
-class SparkContextProviderTest extends FlatSpec with Matchers with TestUtils {
+class YarnSparkContextProviderTest extends FlatSpec with Matchers with TestUtils {
 
-  "createLocalSparkContext" should "be able to start and stop spark context" in {
-    withLog4jConf {
-      val spark = SparkContextProvider.createLocalSparkContext()
+  "createYarnSparkContext" should "be able to start and stop spark context" in {
+    withMiniClusterWithURL { (confUrl) =>
+      val spark = SparkContextProvider.createYarnSparkContext(confUrl)
       try {
-        spark.isLocal shouldBe true
+        spark.isLocal shouldBe false
         spark.isStopped shouldBe false
       } finally {
         spark.stop()
