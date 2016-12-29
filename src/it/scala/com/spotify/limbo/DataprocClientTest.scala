@@ -29,6 +29,11 @@ class DataprocClientTest extends AsyncFlatSpec with Matchers {
 
     // Note: both describe and delete are requested asynchronously, as soon as creation is done
 
+    val listContains = createOpDone.map { _ =>
+      val clusters = DataprocClient.list()
+      clusters.find(_.getClusterName == clusterName) shouldBe defined
+    }
+
     val nameInDescribeMatch = createOpDone.map { _ =>
       val cluster = DataprocClient.describe(clusterName)
       cluster.getClusterName should be (clusterName)
@@ -41,6 +46,7 @@ class DataprocClientTest extends AsyncFlatSpec with Matchers {
 
     for {
       _ <- createOpDone
+      _ <- listContains
       _ <- nameInDescribeMatch
       _ <- deleteOpDone
     } yield succeed
