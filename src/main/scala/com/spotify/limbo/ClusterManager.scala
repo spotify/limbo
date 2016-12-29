@@ -44,7 +44,7 @@ object ClusterManager {
   })
 
   private val logger = LoggerFactory.getLogger(ClusterManager.getClass)
-  private val clusters = mutable.Map.empty[(String, String), Future[Cluster]]
+  private[limbo] val clusters = mutable.Map.empty[(String, String), Future[Cluster]]
 
   private[limbo] def genClusterName(name: String): String = {
     val username = sys.props("user.name")
