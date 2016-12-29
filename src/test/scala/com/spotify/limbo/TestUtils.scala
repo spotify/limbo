@@ -126,10 +126,16 @@ trait TestUtils {
     }, logLevel)
   }
 
-  /** File fixture for tests */
+  /** Directory fixture for tests */
   def withTempOutDir[T](thunk: (String) => T): T = {
     val tempDir = Files.createTempDirectory("limbo-temp-dir")
     thunk(new File(tempDir.toFile, "out").getCanonicalPath)
+  }
+
+  /** File fixture for tests */
+  def withTempFile[T](thunk: (String) => T): T = {
+    val tempFile = Files.createTempFile("gcloud_properties","")
+    thunk(tempFile.toFile.getCanonicalPath)
   }
 
   /** Create a new [[ScioContext]] instance for testing. */

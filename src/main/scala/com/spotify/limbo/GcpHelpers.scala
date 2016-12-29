@@ -50,32 +50,36 @@ object GcpHelpers {
           new File(sys.props("user.home"), ".config/gcloud/properties")
         }
       }
-      val zonePattern = "^zone\\s*=\\s*(.*)$".r
-      val computeSectionPattern = "^\\[compute\\]$".r
-      val sectionPattern = "^\\[(.*)\\]$".r
-
-      import scala.collection.JavaConversions._
-      Files.readLines(configFile, StandardCharsets.UTF_8).toList
-        .map(_.trim)
-        .filter(_.nonEmpty)
-        .dropWhile(!computeSectionPattern.pattern.matcher(_).matches())
-        .drop(1) // drop the compute section header
-        .takeWhile(!sectionPattern.pattern.matcher(_).matches())
-        .find(zonePattern.pattern.matcher(_).matches())
-        .map { s =>
-          val matcher = zonePattern.pattern.matcher(s)
-          matcher.matches()
-          matcher.group(1).trim
-        }
-        .getOrElse {
-          throw new Exception(s"Zone not in the config file $configFile")
-        }
+      getDefaultZone(configFile)
     } catch {
       case e: Exception => {
         logger.error("Failed to find default zone.")
         throw e
       }
     }
+  }
+
+  private[limbo] def getDefaultZone(propertyFile: File) = {
+    val zonePattern = "^zone\\s*=\\s*(.*)$".r
+    val computeSectionPattern = "^\\[compute\\]$".r
+    val sectionPattern = "^\\[(.*)\\]$".r
+
+    import scala.collection.JavaConversions._
+    Files.readLines(propertyFile, StandardCharsets.UTF_8).toList
+      .map(_.trim)
+      .filter(_.nonEmpty)
+      .dropWhile(!computeSectionPattern.pattern.matcher(_).matches())
+      .drop(1) // drop the compute section header
+      .takeWhile(!sectionPattern.pattern.matcher(_).matches())
+      .find(zonePattern.pattern.matcher(_).matches())
+      .map { s =>
+        val matcher = zonePattern.pattern.matcher(s)
+        matcher.matches()
+        matcher.group(1).trim
+      }
+      .getOrElse {
+        throw new Exception(s"Zone not in the config file $propertyFile")
+      }
   }
 
   private[limbo] def getGcpInstance(instanceName: String, projectId: String, zone: String)
