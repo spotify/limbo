@@ -87,8 +87,8 @@ object SparkContextProvider {
   /**
    * Creates a Dataproc based [[SparkContext]]. If need be it will create a new Dataproc cluster.
    */
-  def createDataprocSparkContext(project: String = "scio-playground",
-                                 zone: String = "us-central1-a"): Future[SparkContext] = {
+  def createDataprocSparkContext(project: String = null,
+                                 zone: String = null): Future[SparkContext] = {
     val cluster = ClusterManager.getDataprocCluster(project, zone)
 
     import scala.concurrent.ExecutionContext.Implicits.global

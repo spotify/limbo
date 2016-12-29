@@ -18,6 +18,8 @@
 package com.spotify.limbo
 
 import com.google.api.services.dataproc.model.Cluster
+import com.google.cloud.dataflow.sdk.options.GcpOptions.DefaultProjectFactory
+import org.slf4j.LoggerFactory
 
 import scala.collection.mutable
 import scala.concurrent.{Await, Future}
@@ -41,6 +43,7 @@ object ClusterManager {
       .map(f => Await.ready(f, 5.seconds))
   })
 
+  private val logger = LoggerFactory.getLogger(ClusterManager.getClass)
   private val clusters = mutable.Map.empty[(String, String), Future[Cluster]]
 
   private[limbo] def genClusterName(name: String): String = {
@@ -64,9 +67,22 @@ object ClusterManager {
   }
 
   /** Get or create a new Dataproc cluster for given project and zone */
-  def getDataprocCluster(project: String, zone: String): Future[Cluster] = {
+  def getDataprocCluster(project: String = null, zone: String = null): Future[Cluster] = {
+    val projId = Option(project).getOrElse {
+      // gcp java does not expose default project yet
+      // https://github.com/GoogleCloudPlatform/google-cloud-java/pull/1380
+      new DefaultProjectFactory().create(null)
+    }
+
+    val gcpZone = Option(zone).getOrElse{
+      val infZone = GcpHelpers.getDefaultZone
+      logger.info(s"Inferred default GCP zone $infZone from gcloud. If this is the incorrect "
+        + "zone, please specify zone explicitly.")
+      infZone
+    }
+
     // There is possible race condition here
-    clusters.getOrElse((project, zone), createNewCluster(project, zone))
+    clusters.getOrElse((projId, gcpZone), createNewCluster(projId, gcpZone))
   }
 }
 
