@@ -7,3 +7,4 @@ build
 .scio_repl
 .todo.txt
 .local/*
+spark-warehouse
