@@ -11,8 +11,8 @@ cache:
 
 # GCP credentials for integration test
 before_install:
-  - openssl aes-256-cbc -K $encrypted_b7bb6f667b3b_key -iv $encrypted_b7bb6f667b3b_iv -in .travis/data-integration-test-0acbc82d8523.json.enc -out .travis/data-integration-test-0acbc82d8523.json -d
-  - openssl aes-256-cbc -K $encrypted_b7bb6f667b3b_key -iv $encrypted_b7bb6f667b3b_iv -in .travis/sig.asc.enc -out .travis/sig.asc -d && gpg --fast-import .travis/sig.asc
+  - openssl aes-256-cbc -K $encrypted_b7bb6f667b3b_key -iv $encrypted_b7bb6f667b3b_iv -in .travis/secrets.tgz.enc -out .travis/secrets.tgz -d
+  - tar xvzf .travis/secrets.tgz -C .travis
 
 script:
   - sbt clean scalastyle coverage test it:test coverageReport coverageAggregate
@@ -22,7 +22,7 @@ script:
   - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
 after_success:
   - bash <(curl -s https://codecov.io/bash)
-  - "[[ $TRAVIS_BRANCH == \"master\" ]] && grep -q SNAPSHOT version.sbt && sbt ++$TRAVIS_SCALA_VERSION publishSigned"
+  - .travis/publish.sh
 
 notifications:
   email:
