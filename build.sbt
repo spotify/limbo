@@ -138,3 +138,7 @@ Credentials(
   "oss.sonatype.org",
   username,
   password)).toSeq
+
+pgpPassphrase := (for {
+  pass <- sys.env.get("GPG_PASSPHRASE")
+} yield pass.toArray
