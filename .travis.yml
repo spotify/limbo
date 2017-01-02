@@ -12,6 +12,7 @@ cache:
 # GCP credentials for integration test
 before_install:
   - openssl aes-256-cbc -K $encrypted_b7bb6f667b3b_key -iv $encrypted_b7bb6f667b3b_iv -in .travis/data-integration-test-0acbc82d8523.json.enc -out .travis/data-integration-test-0acbc82d8523.json -d
+  - openssl aes-256-cbc -K $encrypted_b7bb6f667b3b_key -iv $encrypted_b7bb6f667b3b_iv -in .travis/sig.asc.enc -out .travis/sig.asc -d && gpg --fast-import .travis/sig.asc
 
 script:
   - sbt clean scalastyle coverage test it:test coverageReport coverageAggregate
@@ -21,7 +22,7 @@ script:
   - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
 after_success:
   - bash <(curl -s https://codecov.io/bash)
-  - "[[ $TRAVIS_BRANCH == \"master\" ]] && grep -q SNAPSHOT version.sbt && sbt ++$TRAVIS_SCALA_VERSION publish"
+  - "[[ $TRAVIS_BRANCH == \"master\" ]] && grep -q SNAPSHOT version.sbt && sbt ++$TRAVIS_SCALA_VERSION publishSigned"
 
 notifications:
   email:
@@ -33,3 +34,5 @@ env:
     - GOOGLE_APPLICATION_CREDENTIALS=$TRAVIS_BUILD_DIR/.travis/data-integration-test-0acbc82d8523.json
     - secure: "vPhhbEPrPyPgvBb6xuoS2P94Yhh8jJ2YT1eiITTgNPwZGB/iNqCiy497ecQ2rWhnO+MYHIBVmDk1Jux1iHbvr4wBcSN5WebYc7LBxuPVmosFBXSwKeN6JHuN2AegnRRjv04t0zjndIwaBrtAP7sMGmxIO72fwQceB3rkF4RKwwQ7UE+h13yiFAaOIx+srxqyG0+ePmqJR61o6OYAgmU28rij4fnVrSMJXgnQmPRIhWfOogxwVNj2WnuEJFPgv0z6GgDvP59PLumM+mpTxLQ/6LwueLynCFLxMFd5ogz1IPO2FkuaXj2Q/hLAT3+yI8Qz8GMQjsUTRmHcTz7B3v1TR+UQyIAIy644VkkR0v2+ofkoOulplEgi6hTPfKObmUQPpRcLUuX5wHqr3hmMdf6IqB9z21tC4VE3k9x5arhHTNl/w4+6H9pYEZ18zftg9AWQICSN2/dSgsrb/d940NOMB6yNPvFrOK0poJGSbTs6yje3EsnTpErwQ4jZ5OCiEHlGInJegOgxIg2BFIm/vbOIOKZNbyuBdTy8lpMgguP894OreK5g9xbia6UY4toMc0cCnP9Km/X1O75z/t/u/se9x4tk+fJ/fc2XtAOSbRXjfS3gkuPwPPfAFbuvYPLNmxSHkcEfDQI/4P+XFVR7iYcIebCs7SORVfxBwJVg1xoUxGQ="
     - secure: "HQsTZLXwr3GVfXW0whQ3F8aQB1wO8l2128fYQQ6yjq72AvQPdNyhaARMhWHjPtuUKd3DeKm2b5TmmBFWZoNibX0ZQoM1E7S0in0mGZuGJfW1nJmbkf4/jFGfZwtyuzgMhPzjHqpZK0BHbfxQ7C1OE1cPQkYeTqgtvQf4wht9KUi5FCsi9q0QeNu1SvLGkVN42zM4XDTWmvZWPaw5+HHL6V1r3GS9eAQSO/o1jYipSsPf/cRONee2PaK4KFdrv7rI9uwpdRAZQt3GZPU6naCTZ6PIecZoNLarzutKiImEAg71DvRdXBUbOM7/PSkP7UTwxhqBKwEyguk+x/U6g+AUV9/pgDIxpGh41N44XC9qadky0401gmnWolNjBh0g6TE0ZRzIGR/d7WqVWh9wkTp7wGuEPoA9e1Of+pcNYZ7RSGQj7qwuljD3hWxLMAkBI/rt0HBo3Pq3/peymA35WeiBF0VltsSJANGlXC/1tu/QhWXYCnNMyTnlG4j7P3VNhibiCZByuhMZM9SD8U6aBCN9kz1JkOZ4yJBn6uTRS/l5fEGLgOkS86C14v3cVbqk0gZQtKWARS8v4TH/Vush2yFhGuHjoZle6A4mLQEIRqo/qnN+EJ7EEQABJ+gB+COfrfmm+hTLCe2hMfj3SwqaGH4gjP/M2KOzalUDEY5n6i1N1Cc="
+    - secure: "uH2NOqEfHEWRlGHH+uIFkaDHm5wQDBMj1a0GAzeA4s69WCL7j09lFDbzvGqFw/AcFsG7ddof65d6RXubnqsfYRyC0VqyPgnIRqWRSzgyhI6ycuSep8lfjlWP8HgH8e8Q4jpiGjM4xIAv6z+EA9d+IY0pcqMFTD7oUo2x/eZROyu9PEWQwgeBkY/mNNog8KEv7LrDtrDYFibA3aKX4wL2yhDhCj7nI3uqv9GgqVWjYRe4n9QJJNc/S8qAPsPkCoEoSHbFYXilo7+Len0txO/oOZfttDTtMBJqfSq0PmRy9oMZFwB/XF5ortxdAZuA8QVqs+CxwlQuPwjS1wgytJLztK7/Lu6x0zD47a84TeSX1Q7pHjjvP5FtImq8uLxgkuFtf+jGW0nytZJSfycVPyVlnd2IjfMNBAmEdh9hh2hxJCrwz4go3tjiZytp0Vjevr/TTh8RLf9v29jfFJkEjwUgucdj27Rh4BtQh1JE2oOSJlKXyKDxi/+TkLy+KC/AAf58v+Lt2C4SoMT7Tu8XOawU3Ah/oHeFSWJ3e8T3+Z84twpTE+F4HnL4HjkEzOHPjHx1VN1Wf7gkBSXfVIOlSA5+EBT/Yye6r36P6jjKfsNLydXSPOYgB6hZIwqNclGTU59IFg7qGyY3DQN02OtBMn3dkbwqf7ahU1uP4l7i7Cql3mI="
+    - secure: "3T4/tuOMMM5F6J1DL5HDRz8wiIeKfEjld4cP0JNtuv8pbKJiRZreLiHrGiwV1ysPUjbn779E3AL1G2s/F4+IRYhSOe/6w1OMQs7dPu7sVWX/uNXD2ARjsixUiRYIIiE8rKqhWWcmZ4jQKFJ6BwC5HiVLBGYRWI06PPipTaAhLVw5eY3ufZtkNt/xmvH1PUczREZN57gL6858l/DWxYRBYiL+TJit1kFOh4G3yK/9hTzMjdYHo1o2e50wUZ/JLFB/dgplPzc/SkxXudYyo8yNlblDi2gxr36B/rBVe7XfjNJTZn2owkvwga7ZpfCqp27qaIZ0tA0RLXyJScWlj1/oUoGAagKO/i6UorWb0MikSMBClGm/eZn0vn2a/PaBSLFC0At8aSd61E6W3VWqG0PgPX2OXtqKE9/6W9cTEu7G1ZLWiE4ehudbnF+j8S1/7llhs6LnaRsZBgRXJfIg+6mEAwqF9ktLJHDz2Xg4tObou6mW36GawxgTrY0gsDBMkUKX2ioXQLKfOJ0b+3VbsdRzIkyXEJ/1Y+Wf7JbJ+Gxm62z3zv82jc7HgCohk4ycw4uIPgxJi4WGLhuY85GDy0IZQykoioiU3xc1mWyBGg4i6sdB+tjmNV9lkwjxM1tCzRd7Teb7CGncExHx2K3SS5XGUVjf/30E38b4Zp+qtMxqaHQ="
