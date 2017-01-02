@@ -141,4 +141,4 @@ Credentials(
 
 pgpPassphrase := (for {
   pass <- sys.env.get("GPG_PASSPHRASE")
-} yield pass.toArray
+} yield pass.toArray)
